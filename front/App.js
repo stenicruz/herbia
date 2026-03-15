@@ -6,7 +6,19 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 // Importa a tua Splash personalizada
 import MySplash from './src/screens/splash.js'; 
 import Login from './src/screens/login.js';
-import ForgotPassword from './src/screens/forgotPassword.js'
+import ForgotPassword from './src/screens/forgotPassword.js';
+import VerifyCode from './src/screens/verifyCode.js';
+import ResetPassword from './src/screens/resetPassword.js';
+import SuccessScreen from './src/screens/successScreen.js';
+import HomeScreen from './src/screens/home.js'
+import CulturesScreen from './src/screens/culturesScreen.js';
+import PhotoConfirmationScreen from './src/screens/photoConfirmationScreen.js';
+import DiagnosticResultScreen from './src/screens/diagnosticResult.js';
+import HistoryScreen from './src/screens/historyScreen.js';
+import ProfileScreen from './src/screens/profileScreen.js';
+import EditProfileScreen from './src/screens/editProfile.js';
+import SupportScreen from './src/screens/support.js';
+
 
 // Segura a splash nativa
 SplashScreen.preventAutoHideAsync();
@@ -42,7 +54,7 @@ export default function App() {
   // Só depois vai para o Login
   return (
     <SafeAreaProvider>
-      <ForgotPassword />
+      <SupportScreen />
     </SafeAreaProvider>
   );
 }
