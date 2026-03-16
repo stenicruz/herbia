@@ -18,6 +18,15 @@ import HistoryScreen from './src/screens/historyScreen.js';
 import ProfileScreen from './src/screens/profileScreen.js';
 import EditProfileScreen from './src/screens/editProfile.js';
 import SupportScreen from './src/screens/support.js';
+import PhotoSupport from './src/screens/photoSupport.js'
+import DiagnosisGuideScreen from './src/screens/diagnosisSupport.js';
+import PrivacyPolicyScreen from './src/screens/privacy.js';
+import TermsOfUseScreen from './src/screens/termsOfUse.js';
+import AdminDashboardScreen from './src/screens/adminHome.js';
+import UserManagementScreen from './src/screens/userManagement.js';
+import UserDetailsScreen from './src/screens/userDetails.js';
+import Culture from './src/screens/culture.js'
+
 
 
 // Segura a splash nativa
@@ -54,7 +63,7 @@ export default function App() {
   // Só depois vai para o Login
   return (
     <SafeAreaProvider>
-      <SupportScreen />
+      <Culture />
     </SafeAreaProvider>
   );
 }
