@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import  { React, useEffect, useRef } from 'react';
 import { View, Text, Image, StyleSheet, StatusBar, Animated, Easing } from 'react-native';
 
 export default function SplashScreen({ onFinish }) {
   const progress = useRef(new Animated.Value(0)).current;
-  const contentOpacity = useRef(new Animated.Value(1)).current; // Opacidade apenas do conteúdo
+  const contentOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     // 1. Animação da barra
@@ -14,7 +14,7 @@ export default function SplashScreen({ onFinish }) {
       useNativeDriver: false,
     }).start(({ finished }) => {
       if (finished) {
-        // 2. Fade out apenas do conteúdo (Logo + Texto + Loader)
+        // 2. Fade out apenas do conteúdo
         Animated.timing(contentOpacity, {
           toValue: 0,
           duration: 550,
@@ -66,7 +66,7 @@ export default function SplashScreen({ onFinish }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // Fundo sempre branco e sólido
+    backgroundColor: '#FFFFFF',
   },
   innerContent: {
     flex: 1,
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     width: 190,
     height: 190,
     resizeMode: 'contain',
-    backgroundColor: 'transparent', // Garante que a imagem não tenha fundo próprio
+    backgroundColor: 'transparent',
   },
   title: {
     fontSize: 46,
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   loaderContainer: {
-    width: '40%',
+    width: '50%',
     alignSelf: 'center'
   },
   progressBarBackground: {

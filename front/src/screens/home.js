@@ -1,35 +1,48 @@
 import React from 'react';
 import { 
-  StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Platform 
+  StyleSheet, View, Text, Image, TouchableOpacity, ScrollView, Platform, StatusBar 
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { 
   Bell, 
   History, 
   Home, 
   User, 
   Plus, 
-  Camera, 
-  Pencil 
+  Camera,
 } from 'lucide-react-native';
+
+import { AppHeader, BottomTabBar, PrimaryButton } from '../components/central.js';
 
 const imageFundo = require('../../assets/check.jpg'); 
 
-export default function HomeScreen() {
+export default function HomeScreen({navigation}) {
   const insets = useSafeAreaInsets();
+  const culturas = [
+    { id: 1, nome: 'Tomate', img: require('../../assets/tomate.jpeg') },
+    { id: 2, nome: 'Batata', img: require('../../assets/batata.jpeg') },
+    { id: 3, nome: 'Milho', img: require('../../assets/milho.jpeg') },
+  ];
+  const abas = [
+    { name: 'Home', label: 'Casa', icon: Home, screen: 'Home' },
+    { name: 'History', label: 'Histórico', icon: History, screen: 'History' },
+    { name: 'Camera', label: 'Câmera', icon: Camera, screen: 'CameraScanner' },
+    { name: 'Profile', label: 'Perfil', icon: User, screen: 'Profile' },
+  ];
 
   return (
-    <View style={styles.safeContainer}>
+    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      <AppHeader 
+        title="Herbia" 
+        showBack={false} 
+      />
       <ScrollView 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={{ paddingBottom: 130 }}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Herbia</Text>
-        </View>
 
-        {/* Card Verde - Fiel ao Design */}
+        {/* Card Verde */}
         <View style={styles.cardVerde}>
           <View style={styles.cardTextContent}>
             <Text style={styles.cardTitle}>Dica de Cultivo</Text>
@@ -47,27 +60,30 @@ export default function HomeScreen() {
         {/* Frame da Câmera (Visor) */}
         <View style={styles.cameraFrame}>
           <Image source={imageFundo} style={styles.fotoPlanta} />
-          
-          {/* Grid do Visor */}
-          <View style={styles.gridLines}>
-            <View style={styles.hLine} />
-            <View style={styles.vLine} />
-          </View>
 
-          <TouchableOpacity style={styles.btnTirarFoto}>
-            <Text style={styles.btnTirarFotoText}>Tirar uma foto</Text>
-          </TouchableOpacity>
+        <PrimaryButton
+        title={'Tirar Uma Foto'}
+        textStyle={{fontSize: 17}}
+        style={{width: '55%', height: 47, marginTop: 200}}
+        />
         </View>
 
         {/* Culturas Suportadas */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Culturas Suportadas</Text>
           <View style={styles.culturaRow}>
-            {[1, 2, 3].map((id) => (
-              <View key={id} style={styles.culturaItem}>
-                <View style={styles.circuloVerdeEscuro} />
-                <Text style={styles.culturaLabel}>Doença</Text>
-              </View>
+            {culturas.map((item) => (
+              <TouchableOpacity key={item.id} style={styles.culturaItem}>
+                <View style={styles.circuloVerdeEscuro}>
+                  {/* A imagem entra aqui preenchendo o círculo */}
+                  <Image 
+                    source={item.img} 
+                    style={styles.culturaImage} 
+                    resizeMode="cover" 
+                  />
+                </View>
+                <Text style={styles.culturaLabel}>{item.nome}</Text>
+              </TouchableOpacity>
             ))}
             <TouchableOpacity style={styles.addBtn}>
               <Plus color="#47e426" size={35} strokeWidth={3} />
@@ -76,39 +92,12 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* MENU INFERIOR - TRATADO PARA ANDROID */}
-      <View style={[
-        styles.tabBar, 
-        { paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom + 15 }
-      ]}>
-        
-        <TouchableOpacity style={styles.tabItem}>
-          <Home color="#47e426" size={26} fill="#47e426" />
-          <Text style={[styles.tabLabel, {color: '#47e426'}]}>Casa</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.tabItem}>
-          <History color="#999" size={26} />
-          <Text style={styles.tabLabel}>Histórico</Text>
-        </TouchableOpacity>
-
-        {/* BOTÃO CÂMERA - Lente transparente (cor do fundo aparece) */}
-        <View style={styles.cameraTabWrapper}>
-          <TouchableOpacity style={styles.cameraTabBtn}>
-            <Camera 
-              color="#47e426" 
-              size={47}
-              fill={'#fff'} 
-            />
-          </TouchableOpacity>
-          <Text style={[styles.tabLabel, { color: '#7c7a7a' }]}>Câmera</Text>
-        </View>
-
-        <TouchableOpacity style={styles.tabItem}>
-          <User color='#b6adad' size={26} fill={'#b6adad'} />
-          <Text style={[styles.tabLabel, { color: '#7c7a7a' }]}>Perfil</Text>
-        </TouchableOpacity>
-      </View>
+      <BottomTabBar 
+        state="Home" // Indica que esta tela é a ativa
+        navigation={navigation} 
+        tabs={abas} 
+      />
+      
     </View>
   );
 }
@@ -128,6 +117,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     overflow: 'hidden',
     position: 'relative',
+    marginTop: 15
   },
   cardTextContent: { flex: 1, zIndex: 2, justifyContent: 'center' },
   cardTitle: { color: '#FFF', fontSize: 20, fontWeight: '800' },
@@ -167,9 +157,21 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1B1919', marginBottom: 15 },
   culturaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   culturaItem: { alignItems: 'center' },
-  circuloVerdeEscuro: { width: 75, height: 75, borderRadius: 38, backgroundColor: '#233814' },
+  circuloVerdeEscuro: { width: 75, height: 75, borderRadius: 38, backgroundColor: '#233814',
+    overflow: 'hidden', // ESSENCIAL: corta a imagem no formato do círculo
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#eee' },
   culturaLabel: { fontSize: 14, color: '#333', marginTop: 8, fontWeight: '500' },
   addBtn: { marginLeft: 5 },
+  culturaImage: {
+    borderRadius: 40,
+    width: '98%',
+    height: '98%',
+  },
+
+// ...
 
   // Tab Bar
   tabBar: {

@@ -1,22 +1,41 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import { ChevronLeft, Lock, Eye, EyeOff, ShieldCheck, RefreshCcw } from 'lucide-react-native';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  KeyboardAvoidingView, 
+  Platform, 
+  ScrollView 
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Lock, ShieldCheck, RefreshCcw } from 'lucide-react-native';
+
+// Importando seus componentes
+import { AppHeader, PrimaryButton, CustomInput } from '../components/central.js';
 
 export default function ResetPassword({ navigation }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        
-        {/* Header */}
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ChevronLeft color="#272525" size={28} />
-        </TouchableOpacity>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      
+      {/* Header */}
+        <AppHeader 
+        onBack={() => navigation.goBack()} 
+      />
 
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        style={{ flex: 1 }}
+      >
+      
+      <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={styles.content}>
           
           {/* Ícone Composto (Escudo + Círculo de Recarga) */}
@@ -35,53 +54,38 @@ export default function ResetPassword({ navigation }) {
           </Text>
 
           {/* Campo: Nova Palavra-Passe */}
-            <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>Nova Palavra-Passe</Text>
-            <View style={styles.inputContainer}>
-                <Lock color="#828282" size={20} style={styles.inputIcon} />
-                <TextInput 
-                style={styles.input}
-                placeholder="**********"
-                placeholderTextColor="#828282" // Força a cor aqui
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 5 }}>
-                {showPassword ? <EyeOff color="#828282" size={20} /> : <Eye color="#828282" size={20} />}
-                </TouchableOpacity>
-            </View>
-            </View>
+            <CustomInput 
+              label="Nova Palavra-Passe"
+              placeholder="**********"
+              icon={Lock}
+              isPassword={true}
+            />
 
           {/* Campo: Confirmar Palavra-Passe */}
-          <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>Confirmar Palavra-Passe</Text>
-            <View style={styles.inputContainer}>
-              <Lock color="#828282" size={20} style={styles.inputIcon} />
-              <TextInput 
-                style={styles.input}
-                placeholder="**********"
-                placeholderTextColor="#828282"
-                secureTextEntry={!showConfirmPassword}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-              />
-              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                {showConfirmPassword ? <EyeOff color="#828282" size={20} /> : <Eye color="#828282" size={20} />}
-              </TouchableOpacity>
-            </View>
-          </View>
+          <CustomInput 
+              label="Confirmar Palavra-Passe"
+              placeholder="**********"
+              icon={Lock}
+              isPassword={true}
+            />
 
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={() => navigation.navigate('SuccessScreen')}
-          >
-            <Text style={styles.buttonText}>Redefinir Senha</Text>
-          </TouchableOpacity>
+          <PrimaryButton 
+              title="Redefinir Senha"
+              onPress={() => {
+                if(password !== confirmPassword) {
+                  alert("As senhas não coincidem!");
+                  return;
+                }
+                navigation.reset({
+                  index: 0, // Define que a tela abaixo será a principal (posição 0)
+                  routes: [{ name: 'Success' }], // Nome exato que está no seu Routes.js
+                });
+              }}
+              style={{ marginTop: 40, width: '100%' }}
+          />
+
         </View>
-
+      </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

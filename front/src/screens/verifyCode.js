@@ -1,6 +1,18 @@
 import React, { useRef } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import { ChevronLeft, Mail, RefreshCw, Check, Underline } from 'lucide-react-native'; // Importamos os ícones necessários
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  KeyboardAvoidingView, 
+  Platform,
+  ScrollView 
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Mail, RefreshCw } from 'lucide-react-native';
+
+import { AppHeader, PrimaryButton } from '../components/central.js';
 
 export default function VerifyCode({ navigation }) {
   const inputs = useRef([]);
@@ -15,13 +27,23 @@ export default function VerifyCode({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ChevronLeft color="#272525" size={28} />
-        </TouchableOpacity>
-
+    <SafeAreaView style={styles.container} edges={['top']}>
+      
+      <AppHeader 
+        onBack={() => navigation.goBack()} 
+      />
+      
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        // Ajuste o número 100 conforme necessário (tamanho do seu header + margem)
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 100} 
+        style={{ flex: 1 }}
+      >
+       <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }} 
+          bounces={false}
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={styles.content}>
           
           <View style={styles.iconWrapper}>
@@ -50,12 +72,12 @@ export default function VerifyCode({ navigation }) {
             ))}
           </View>
 
-          <TouchableOpacity 
-            style={styles.button}
+          <PrimaryButton 
+            title="Verificar"
+            textStyle={{fontSize: 18}}
             onPress={() => navigation.navigate('ResetPassword')}
-          >
-            <Text style={styles.buttonText}>Verificar</Text>
-          </TouchableOpacity>
+            style={{ width: '100%', marginBottom: 30 }}
+          />
 
           <View style={styles.resendContainer}>
             <Text style={styles.resendText}>Não recebeu o código?</Text>
@@ -64,9 +86,9 @@ export default function VerifyCode({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
-
+      </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
 

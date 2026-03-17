@@ -1,17 +1,14 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { CircleCheck, ChevronLeft, ArrowRight, ShieldCheck } from 'lucide-react-native';
+import { StyleSheet, View, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'; // Importante para o container
+import { CircleCheck, ArrowRight, ShieldCheck } from 'lucide-react-native';
+
+import { PrimaryButton, AppHeader } from '../components/central';
 
 export default function SuccessScreen({ navigation }) {
   return (
-    <View style={styles.container}>
-      {/* Header com botão voltar */}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <View style={styles.backButtonCircle}>
-          <ChevronLeft color="#1B1919" size={24} />
-        </View>
-      </TouchableOpacity>
-
+    <SafeAreaView style={styles.container} edges={['top']}>
+      
       <View style={styles.content}>
         {/* Ícone Estático com Efeito Glow */}
         <View style={styles.iconOuterRing}>
@@ -39,15 +36,13 @@ export default function SuccessScreen({ navigation }) {
         </View>
 
         {/* Botão Principal */}
-        <TouchableOpacity 
-          style={styles.button}
-          onPress={() => navigation.navigate('Login')}
-        >
-          <Text style={styles.buttonText}>Ir para Login</Text>
-          <ArrowRight color="#1B1919" size={20} style={{ marginLeft: 10 }} />
-        </TouchableOpacity>
+        <PrimaryButton
+        title={"Ir para Login"}
+        icon={ArrowRight}
+        onPress={() => navigation.navigate('Login')}
+        />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

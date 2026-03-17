@@ -1,6 +1,6 @@
-import React, { useState } from 'react'; // Adicionado useState
+import React, { useState } from 'react';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, Pressable 
+  StyleSheet, StatusBar, View, Text, TouchableOpacity, ScrollView, Modal, Pressable, Alert 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -10,62 +10,59 @@ import {
   Gavel,
   CheckCircle2,
   ChevronLeft,
-  AlertCircle // Ícone para o modal
+  AlertCircle, // Ícone para o modal
+  ArrowRight
 } from 'lucide-react-native';
 
-export default function PrivacyPolicyScreen({ navigation }) {
+import { AppHeader, PrimaryButton, ConfirmationModal }  from '../components/central.js';
+
+export default function PrivacyPolicyScreen({ route, navigation }) {
   const [modalVisible, setModalVisible] = useState(false); // Estado do modal
   const activeColor = '#47e426';
 
+  // 1. Pegamos o isLogged dos parâmetros da rota (ou false por padrão)
+  const isLogged = route.params?.isLogged ?? false;
+
+  const confirmDeletion = () => {
+    setModalVisible(false);
+    console.log("Conta excluída com sucesso");
+    // Futura lógica de API aqui
+  };
+  
+  // 2. Definimos a função de clique AQUI DENTRO
+  const handleDeletePress = () => {
+    if (!isLogged) {
+      Alert.alert(
+        "Acesso Negado",
+        "Para excluir uma conta, você precisa primeiro estar autenticado no sistema.",
+        [{ text: "Entendido", style: "cancel" }]
+      );
+    } else {
+      setModalVisible(true);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top']}>
-      
-      {/* --- MODAL DE CONFIRMAÇÃO --- */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+    <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" /> 
+    
+      {/* --- MODAL DE CONFIRMAÇÃO  --- */}
+      <ConfirmationModal
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-          <View style={styles.modalContent}>
-            <View style={styles.warningIconCircle}>
-              <AlertCircle color="#FF4444" size={40} />
-            </View>
-            <Text style={styles.modalTitle}>Excluir Conta?</Text>
-            <Text style={styles.modalSub}>
-              Esta ação é permanente. Todos os seus diagnósticos e dados de perfil serão apagados definitivamente.
-            </Text>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalBtn, styles.btnCancel]} 
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.textCancel}>Cancelar</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.modalBtn, styles.btnConfirm]} 
-                onPress={() => {
-                  setModalVisible(false);
-                  console.log("Conta excluída");
-                }}
-              >
-                <Text style={styles.textConfirm}>Excluir</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Pressable>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        onConfirm={confirmDeletion}
+        title="Excluir Conta?"
+        message="Esta ação é permanente. Todos os seus diagnósticos e dados de perfil serão apagados definitivamente."
+        confirmText="Excluir"
+        type="danger" // Geralmente modais de confirmação têm um tipo para mudar a cor do botão
+      />
+
 
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#666" size={26} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Política de Privacidade</Text>
-      </View>
+      <AppHeader 
+        title="Política de Privacidade" 
+        onBack={() => navigation.goBack()} 
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
@@ -130,14 +127,17 @@ export default function PrivacyPolicyScreen({ navigation }) {
           Você tem total controle sobre seus dados pessoais, você pode:
         </Text>
 
-        {/* Botão Deletar Conta - Agora abre o Modal */}
-        <TouchableOpacity 
-          style={styles.deleteButton} 
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.deleteButtonText}>Deletar Conta</Text>
-          <ChevronRight color="#666" size={20} />
-        </TouchableOpacity>
+        {/* Botão Deletar Conta*/}
+        <PrimaryButton 
+          title="Deletar Conta"
+          variant='outline'
+          gap={160}
+          icon={ChevronRight}
+          iconSize={25}
+          textStyle={{color: '#383737', fontWeight: 600, marginLeft: 10}}
+          onPress={handleDeletePress}
+          style={{ flex: 1, height: 60, marginBottom: 50, borderWidth: 0.5 }}
+        />
 
       </ScrollView>
     </SafeAreaView>

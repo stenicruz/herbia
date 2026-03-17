@@ -14,6 +14,8 @@ import {
   User
 } from 'lucide-react-native';
 
+import { AppHeader, PrimaryButton, ConfirmModal } from '../components/central';
+
 export default function TermsOfUseScreen({ navigation }) {
   const activeColor = '#47e426';
 
@@ -37,12 +39,10 @@ export default function TermsOfUseScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#666" size={28} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Termos de Uso</Text>
-      </View>
+      <AppHeader 
+        title="Termos de Uso" 
+        onBack={() => navigation.goBack()} 
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
@@ -75,11 +75,8 @@ export default function TermsOfUseScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safeContainer: { flex: 1, backgroundColor: '#FFF' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 20 },
-  backBtn: { padding: 5 },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#333', flex: 1, marginLeft: 18, marginVertical: 20 },
   
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 110 },
+  scrollContent: { paddingHorizontal: 25, paddingBottom: 60, paddingTop: 20 },
 
   card: {
     backgroundColor: '#FFF',

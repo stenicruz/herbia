@@ -1,91 +1,103 @@
-import React from 'react';
-import { StyleSheet, View, Text, Image, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import { ChevronLeft, Mail } from 'lucide-react-native';
+import React , { useState } from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  Image, 
+  KeyboardAvoidingView, 
+  Platform, 
+  ScrollView,
+  StatusBar
+} from 'react-native';
+import { Mail } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+// Seus componentes centralizados
+import { CustomInput, PrimaryButton, AppHeader } from '../components/central.js';
 
 export default function ForgotPassword({ navigation }) {
   return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        
-        {/* Header com botão voltar */}
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ChevronLeft color="#000" size={28} />
-        </TouchableOpacity>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      
+      {/* HEADER */}
+      <AppHeader 
+        title="Recuperar Senha" 
+        onBack={() => navigation.goBack()} 
+      />
 
-        <View style={styles.content}>
-          <Image 
-            source={require('../../assets/diagnostico.jpg')} // Certifica-te que tens esta imagem
-            style={styles.mainImage}
-          />
-
-          <Text style={styles.title}>Recuperar Senha</Text>
-          <Text style={styles.subtitle}>
-            Insira o seu e-mail, envie para receber um código de recuperação.
-          </Text>
-
-            <View style={{ width: '100%', alignItems: 'flex-start' }}>
-            <Text style={styles.inputLabel}>E-mail</Text>
-            </View>
-
-            <View style={styles.inputContainer}>
-            <Mail color="#828282" size={20} style={styles.inputIcon} />
-            <TextInput 
-                style={styles.input}
-                placeholder="seuemail@exemplo.com"
-                placeholderTextColor="#828282"
-                keyboardType="email-address"
-                autoCapitalize="none"
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 10}
+        style={{ flex: 1 }}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          // Isso faz com que o teclado feche ao clicar fora do input
+          keyboardShouldPersistTaps="handled" 
+        >
+          <View style={styles.content}>
+            <Image 
+              source={require('../../assets/diagnostico.jpg')} 
+              style={styles.mainImage}
             />
-            </View>
 
+            <Text style={styles.title}>Esqueceu a senha?</Text>
+            <Text style={styles.subtitle}>
+              Insira o seu e-mail abaixo para receber um código de verificação.
+            </Text>
 
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={() => navigation.navigate('VerifyCode')}
-          >
-            <Text style={styles.buttonText}>Enviar Código</Text>
-          </TouchableOpacity>
-        </View>
+            <CustomInput 
+              label="E-mail"
+              placeholder="seuemail@exemplo.com"
+              icon={Mail} // Assumindo que o Mail está importado ou disponível via prop
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
+            <PrimaryButton 
+              title="Enviar Código"
+              onPress={() => navigation.navigate('VerifyCode')}
+              borderRadius={12}
+              style={{ marginTop: 15 }}
+            />
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
-  backButton: { padding: 20, marginTop: 35 },
-  content: { flex: 1, alignItems: 'center', paddingHorizontal: 30 },
-  mainImage: { width: '100%', height: 300, borderRadius: 16, marginBottom: 25, resizeMode: 'cover' },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#000', marginBottom: 16 },
-  subtitle: { fontSize: 14, color: '#828282', textAlign: 'center', marginBottom: 30, lineHeight: 20 },
-  inputContainer: { 
-    flexDirection: 'row', 
+  scrollContent: { flexGrow: 1 },
+  content: { 
+    flex: 1, 
     alignItems: 'center', 
-    borderWidth: 1, 
-    borderColor: '#E0E0E0', 
-    borderRadius: 10, 
-    paddingHorizontal: 15, 
-    width: '100%',
-    height: 55,
-    marginBottom: 25
+    paddingHorizontal: 30,
+    paddingTop: 20 
   },
-    inputLabel: {
-    fontSize: 14,
-    color: '#000',
-    marginBottom: 8,
-    fontWeight: '500',
-    },
-  inputIcon: { marginRight: 17 },
-  input: { flex: 1, color: '#000', fontSize: 16 },
-  button: { 
-    backgroundColor: '#47e426', 
+  mainImage: { 
     width: '100%', 
-    height: 55, 
-    borderRadius: 10, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    marginTop: 10
+    height: 250, 
+    borderRadius: 20, 
+    marginBottom: 30, 
+    resizeMode: 'cover' 
   },
-  buttonText: { color: '#272525', fontSize: 18, fontWeight: 'bold' }
+  title: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    color: '#161616', 
+    marginBottom: 10,
+    alignSelf: 'center'
+  },
+  subtitle: { 
+    fontSize: 14, 
+    color: '#828282', 
+    textAlign: 'left', 
+    textAlign: 'center',
+    marginBottom: 30, 
+    lineHeight: 20 
+  },
 });

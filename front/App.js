@@ -1,69 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native'; // Importante!
 
+// Importa o seu mapa de rotas (ajuste o caminho se necessário)
+import Routes from './src/navigation/AppNavigator.js'; 
 
-// Importa a tua Splash personalizada
-import MySplash from './src/screens/splash.js'; 
-import Login from './src/screens/login.js';
-import ForgotPassword from './src/screens/forgotPassword.js';
-import VerifyCode from './src/screens/verifyCode.js';
-import ResetPassword from './src/screens/resetPassword.js';
-import SuccessScreen from './src/screens/successScreen.js';
-import HomeScreen from './src/screens/home.js'
-import CulturesScreen from './src/screens/culturesScreen.js';
-import PhotoConfirmationScreen from './src/screens/photoConfirmationScreen.js';
-import DiagnosticResultScreen from './src/screens/diagnosticResult.js';
-import HistoryScreen from './src/screens/historyScreen.js';
-import ProfileScreen from './src/screens/profileScreen.js';
-import EditProfileScreen from './src/screens/editProfile.js';
-import SupportScreen from './src/screens/support.js';
-import PhotoSupport from './src/screens/photoSupport.js'
-import DiagnosisGuideScreen from './src/screens/diagnosisSupport.js';
-import PrivacyPolicyScreen from './src/screens/privacy.js';
-import TermsOfUseScreen from './src/screens/termsOfUse.js';
-import AdminDashboardScreen from './src/screens/adminHome.js';
-import UserManagementScreen from './src/screens/userManagement.js';
-import UserDetailsScreen from './src/screens/userDetails.js';
-import Culture from './src/screens/culture.js'
-
-
-
-// Segura a splash nativa
+// Segura a splash nativa do sistema
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     async function prepare() {
       try {
-        await SplashScreen.preventAutoHideAsync();
-        // Simplesmente avisa que o motor do app está pronto
+        // Pré-carregamento de fontes ou dados necessários aqui
         setAppIsReady(true);
       } catch (e) {
         console.warn(e);
       } finally {
-        // Esconde a nativa para a sua personalizada assumir
+        // Esconde a splash nativa do Expo/Android/iOS
         await SplashScreen.hideAsync();
       }
     }
     prepare();
   }, []);
 
-  // Se o sistema ainda não "escondeu" a nativa, não mostra nada
+  // Se o motor do app não estiver pronto, não renderiza nada
   if (!appIsReady) return null;
 
-  // Mostra a SUA splash com a barra que corre
-  if (showSplash) {
-    return <MySplash onFinish={() => setShowSplash(false)} />;
-  }
-
-  // Só depois vai para o Login
   return (
     <SafeAreaProvider>
-      <Culture />
+      {/* O NavigationContainer é o que permite a navegação funcionar em todo o app */}
+      <NavigationContainer>
+        <Routes />
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }
