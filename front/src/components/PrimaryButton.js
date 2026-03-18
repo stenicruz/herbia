@@ -6,6 +6,8 @@ import {
   ActivityIndicator, 
   View 
 } from 'react-native';
+import { THEME } from '../styles/Theme';
+import { useTheme } from '../context/ThemeContext';
 
 export const PrimaryButton = ({ 
   title, 
@@ -21,42 +23,66 @@ export const PrimaryButton = ({
   style,
   textStyle
 }) => {
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
   
-  // Lógica de estilos baseada na variante
-  const getButtonStyle = () => {
-    switch (variant) {
-      case 'outline': return styles.btnOutline;
-      case 'danger': return styles.btnDanger;
-      default: return styles.btnPrimary;
+  // Lógica de Cores Inteligente
+  const colors = {
+    primary: {
+      bg: THEME.primary,
+      text: isDarkMode ? THEME.dark.background : '#fff',
+      icon: isDarkMode ? THEME.dark.background : '#fff',
+      border: 'transparent'
+    },
+    outline: {
+      bg: 'transparent',
+      text: isDarkMode ? THEME.text3 : THEME.primary,
+      icon: THEME.primary,
+      border: '#47e426', // Borda mais discreta no Dark
+    },
+    danger: {
+      bg: isDarkMode ? '#2D1616' : '#FFECEC', // Fundo escuro avermelhado no Dark
+      text: THEME.error,
+      icon: THEME.error,
+      border: 'transparent'
     }
   };
 
-  const getTextStyle = () => {
-    switch (variant) {
-      case 'outline': return styles.textOutline;
-      case 'danger': return styles.textDanger;
-      default: return styles.textPrimary;
-    }
-  };
+  const currentColors = colors[variant] || colors.primary;
 
   return (
     <TouchableOpacity 
-      style={[styles.baseButton, getButtonStyle(), { borderRadius }, style]} 
+      style={[
+        styles.baseButton, 
+        { 
+          backgroundColor: currentColors.bg, 
+          borderColor: currentColors.border,
+          borderWidth: variant === 'outline' ? 1 : 0,
+          borderRadius 
+        }, 
+        style
+      ]} 
       onPress={onPress}
       disabled={loading}
+      activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? '#47e426' : "#FFF"} />
+        <ActivityIndicator color={currentColors.text} />
       ) : (
         <View style={[styles.content, reverse && { flexDirection: 'row-reverse' }, { gap }]}>
-          <Text style={[styles.baseText, getTextStyle(), textStyle]}>
-            {title}
-          </Text>
+          {/* Se o título for um objeto (como na tela Decision), renderiza direto */}
+          {typeof title === 'object' ? (
+            title
+          ) : (
+            <Text style={[styles.baseText, { color: currentColors.text }, textStyle]}>
+              {title}
+            </Text>
+          )}
 
           {Icon && (
             <Icon 
               size={iconSize} 
-              color={variant === 'primary' ? '#FFF' : '#47e426' || 'danger' ? '#d40b0b' : '#47e426'} 
+              color={currentColors.icon} 
               strokeWidth={iconStrokeWidth}
             />
           )}
@@ -69,38 +95,18 @@ export const PrimaryButton = ({
 const styles = StyleSheet.create({
   baseButton: {
     height: 55,
-    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    marginVertical: 8,
-  },
-  btnPrimary: {
-    backgroundColor: '#47e426',
-    // Sombra leve para destaque
-    elevation: 3,
-    shadowColor: '#000000ce',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  btnOutline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#47e426',
-  },
-  btnDanger: {
-    backgroundColor: '#FFECEC',
+    // Removi o marginVertical fixo para dar mais controle de responsividade às telas
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 18, // Respiro interno para o conteúdo
   },
   baseText: {
     fontSize: 16,
     fontWeight: '700',
   },
-  textPrimary: { color: '#FFF' },
-  textOutline: { color: '#47e426' },
-  textDanger: { color: '#db2626' },
-  icon: { marginRight: 10 }
 });

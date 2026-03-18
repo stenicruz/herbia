@@ -1,14 +1,28 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, StatusBar, TouchableOpacity, Alert } from 'react-native'; // Adicionado Alert e TouchableOpacity
+import { 
+  View, 
+  Text, 
+  Image, 
+  StyleSheet, 
+  StatusBar, 
+  TouchableOpacity, 
+  Alert, 
+  Dimensions 
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowRightCircle } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importante!
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Importando nosso componente
+import { useTheme } from '../context/ThemeContext';
+import { THEME } from '../styles/Theme';
 import { PrimaryButton } from '../components/central.js';
+
+const { height } = Dimensions.get('window');
 
 export default function Decision({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
   // Função "Secreta" para Desenvolvedor
   const resetOnboarding = async () => {
@@ -25,20 +39,35 @@ export default function Decision({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom + 20 }]}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" /> 
+    <View style={[
+      styles.container, 
+      { 
+        backgroundColor: currentTheme.background, 
+        paddingTop: insets.top, 
+        paddingBottom: insets.bottom + 20 
+      }
+    ]}>
+      <StatusBar 
+        barStyle={isDarkMode ? "light-content" : "dark-content"} 
+        backgroundColor={currentTheme.background} 
+      /> 
       
-      {/* 1. Header com Logo */}
+      {/* Header */}
       <View style={styles.header}>
-        <Image source={require('../../assets/logo1.png')} style={styles.logoIcon} />
-        <Text style={styles.brandName}>Herbia</Text>
-        <Text style={styles.tagline}>Sua planta, nossa paixão</Text>
+        <Image 
+          source={isDarkMode ? require('../../assets/logo2.png') : require('../../assets/logo1.png')} 
+          style={styles.logoIcon} 
+        />
+        <Text style={[styles.brandName, { color: currentTheme.textPrimary }]}>Herbia</Text>
+        <Text style={[styles.tagline, { color: currentTheme.textSecondary }]}>Sua planta, nossa paixão</Text>
       </View>
 
       {/* 2. Corpo Central */}
       <View style={styles.body}>
-        <Text style={styles.title}>Como deseja continuar?</Text>
-        <Text style={styles.subtitle}>Escolha a melhor forma de cuidar das suas plantas</Text>
+        <Text style={[styles.title, { color: currentTheme.textPrimary }]}>Como deseja continuar?</Text>
+        <Text style={[styles.subtitle, { color: currentTheme.textSecondary }]}>
+          Escolha a melhor forma de cuidar das suas plantas
+        </Text>
 
         <PrimaryButton 
           onPress={() => navigation.navigate('Login')}
@@ -52,8 +81,11 @@ export default function Decision({ navigation }) {
           style={styles.btnAdjust}
           title={
             <View style={styles.buttonTextContainer}>
-              <Text style={styles.loginTitle}>Fazer Login</Text>
-              <Text style={styles.loginSub}>Sincronize seus dados</Text>
+              <Text style={[
+                styles.loginTitle, 
+                { color: isDarkMode ? THEME.dark.background : '#fff' }
+              ]}>Fazer Login</Text>
+              <Text style={[styles.loginSub, { color: currentTheme.background }]}>Sincronize seus dados</Text>
             </View>
           }
         />
@@ -62,16 +94,19 @@ export default function Decision({ navigation }) {
           onPress={() => navigation.navigate('Main')}
           variant="outline"
           borderRadius={25}
-          contentAlign="space-between"
           icon={ArrowRightCircle}
-          gap={50}
-          iconSize={40}
+          iconSize={35}
           iconStrokeWidth={1}
           style={styles.btnAdjust}
           title={
             <View style={styles.buttonTextContainer}>
-              <Text style={styles.guestTitle}>Entrar como convidado</Text>
-              <Text style={styles.guestSub}>Acesso rápido sem registro</Text>
+              <Text style={[
+                styles.guestTitle, 
+                { color: isDarkMode ? '#FFF' : '#222020' }
+              ]}>Entrar como convidado</Text>
+              <Text style={[styles.guestSub, { color: isDarkMode ? THEME.dark.textSecondary : currentTheme.textSecondary }]}>
+                Acesso rápido sem registro
+              </Text>
             </View>
           }
         />
@@ -84,10 +119,12 @@ export default function Decision({ navigation }) {
 
       {/* 3. Rodapé Termos */}
       <View style={styles.footer}>
-        <Text style={styles.footerText} >Ao entrar, você concorda com nossos</Text>
+        <Text style={[styles.footerText, { color: currentTheme.textSecondary }]}>
+          Ao entrar, você concorda com nossos</Text>
         <Text style={styles.footerText}>
           <Text 
-          style={styles.linkText} onPress={() => navigation.navigate('TermsOfUse')}>Termos de Uso</Text> e <Text style={styles.linkText} onPress={() => navigation.navigate('PrivacyPolicy', { isLogged: false })}>Política de Privacidade</Text>
+          style={styles.linkText} onPress={() => navigation.navigate('TermsOfUse')}>Termos de Uso</Text>
+          <Text style={[styles.footerText, { color: currentTheme.textSecondary }]}> e</Text> <Text style={styles.linkText} onPress={() => navigation.navigate('PrivacyPolicy', { isLogged: false })}>Política de Privacidade</Text>
         </Text>
       </View>
 
@@ -96,24 +133,85 @@ export default function Decision({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  // ... mantendo seus estilos anteriores ...
-  container: { flex: 1, backgroundColor: '#FFFFFF', paddingHorizontal: 30, justifyContent: 'space-between' },
-  header: { alignItems: 'center', marginTop: 30 },
-  logoIcon: { width: 140, height: 140, resizeMode: 'contain' },
-  brandName: { fontSize: 32, fontWeight: 'bold', color: '#161616', marginTop: -8 },
-  tagline: { fontSize: 15, color: '#999', marginTop: 5 },
-  body: { flex: 1, justifyContent: 'center' },
-  title: { fontSize: 24, fontWeight: '550', textAlign: 'center', color: '#000', marginTop: -10 },
-  subtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginTop: 13, marginBottom: 40 },
-  btnAdjust: { height: 100, paddingVertical: 15, marginBottom: 20 },
-  buttonTextContainer: { flex: 1, justifyContent: 'center', alignItems: 'flex-start' },
-  loginTitle: { color: '#FFF', fontSize: 18, fontWeight: 'bold', marginBottom: 6 },
-  loginSub: { color: '#FFF', fontSize: 13, opacity: 0.9 },
-  guestTitle: { color: '#222020', fontSize: 17, fontWeight: 'bold', marginBottom: 6 },
-  guestSub: { color: '#888', fontSize: 13 },
-  footer: { alignItems: 'center', marginTop: -15, marginBottom: 10 },
-  footerText: { fontSize: 12, color: '#888', lineHeight: 18 },
-  linkText: { color: '#47e426', fontWeight: 'bold' },
+  container: { 
+    flex: 1, 
+    paddingHorizontal: 30, 
+    justifyContent: 'space-between' 
+  },
+  header: { 
+    alignItems: 'center', 
+    marginTop: height * 0.03
+  },
+  logoIcon: { 
+    width: height * 0.18,
+    height: height * 0.16, 
+    resizeMode: 'contain' 
+  },
+  brandName: { 
+    fontSize: 32, 
+    fontWeight: 500, 
+    marginTop: -8 
+  },
+  tagline: { 
+    fontSize: 15, 
+    marginTop: 5 
+  },
+  body: { 
+    flex: 1, 
+    justifyContent: 'center' 
+  },
+  title: { 
+    fontSize: 24, 
+    fontWeight: '550', 
+    textAlign: 'center', 
+    marginTop: -10 
+  },
+  subtitle: { 
+    fontSize: 14, 
+    textAlign: 'center', 
+    marginTop: 13, 
+    marginBottom: 40 
+  },
+  btnAdjust: { 
+    height: 95, 
+    paddingVertical: 15, 
+    marginBottom: 20 
+  },
+  buttonTextContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'flex-start' 
+  },
+  loginTitle: {
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 2 
+  },
+  loginSub: { 
+    fontSize: 13, 
+    opacity: 0.9 
+  },
+  guestTitle: { 
+    fontSize: 17, 
+    fontWeight: 'bold', 
+    marginBottom: 2 
+  },
+  guestSub: { 
+    fontSize: 13 
+  },
+  footer: { 
+    alignItems: 'center', 
+    marginBottom: 10 
+  },
+  footerText: { 
+    fontSize: 12, 
+    lineHeight: 18 
+  },
+  linkText: { 
+    color: '#47e426', 
+    fontWeight: 'bold', 
+    fontSize: 12 
+  },
 
   // Estilo do botão de RESET
   devButton: {
@@ -121,13 +219,13 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     padding: 10,
     borderWidth: 1,
-    borderColor: '#EEE',
+    borderColor: '#333',
     borderRadius: 8,
     borderStyle: 'dashed'
   },
   devButtonText: {
     fontSize: 10,
-    color: '#CCC',
+    color: '#555',
     fontWeight: 'bold'
   }
 });

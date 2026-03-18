@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native'; // Importante!
-
+import { ThemeProvider } from './src/context/ThemeContext';
 // Importa o seu mapa de rotas (ajuste o caminho se necessário)
 import Routes from './src/navigation/AppNavigator.js'; 
 
@@ -31,11 +31,12 @@ export default function App() {
   if (!appIsReady) return null;
 
   return (
-    <SafeAreaProvider>
-      {/* O NavigationContainer é o que permite a navegação funcionar em todo o app */}
-      <NavigationContainer>
-        <Routes />
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <ThemeProvider>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <Routes />
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }

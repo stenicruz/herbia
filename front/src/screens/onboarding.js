@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, StatusBar, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowRightCircle } from 'lucide-react-native';
+import { THEME } from '../styles/Theme';
+import { useTheme } from '../context/ThemeContext';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const ONBOARDING_STEPS = [
   {
@@ -36,6 +38,9 @@ export default function Onboarding({ navigation, onFinish }) {
   const [currentStep, setCurrentStep] = useState(0);
   const insets = useSafeAreaInsets();
 
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
+
   const isLastStep = currentStep === ONBOARDING_STEPS.length - 1;
 
   const handleNext = () => {
@@ -53,18 +58,23 @@ export default function Onboarding({ navigation, onFinish }) {
   const data = ONBOARDING_STEPS[currentStep];
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-    <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <View style={styles.wrapper}>
+    <View style={[styles.container, { backgroundColor: currentTheme.background, paddingTop: insets.top }]}>
+    <StatusBar 
+        barStyle={isDarkMode ? "light-content" : "dark-content"} 
+        backgroundColor={currentTheme.background} 
+      />
+      <View style={[styles.wrapper, { paddingBottom: insets.bottom + 40 }]}>
         
         <Image source={data.image} style={styles.mainImage} />
 
         <View style={styles.textBlock}>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: currentTheme.textPrimary }]}>
             {data.titlePart1}
             <Text style={styles.greenText}>{data.titleHighlight}</Text>
           </Text>
-          <Text style={styles.description}>{data.description}</Text>
+          <Text style={[styles.description, { color: currentTheme.textSecondary }]}>
+            {data.description}
+          </Text>
         </View>
 
         <View style={styles.dotsContainer}>
@@ -73,7 +83,9 @@ export default function Onboarding({ navigation, onFinish }) {
               key={index}
               style={[
                 styles.dot, 
-                currentStep === index ? styles.dotActive : styles.dotInactive
+                currentStep === index 
+                  ? styles.dotActive 
+                  : { backgroundColor: isDarkMode ? '#1A2E17' : '#cef3c6', width: 10 }
               ]} 
             />
           ))}
@@ -83,7 +95,7 @@ export default function Onboarding({ navigation, onFinish }) {
           
           {!isLastStep && (
             <TouchableOpacity style={styles.skipContainer} onPress={handleSkip}>
-              <Text style={styles.skipText}>Pular</Text>
+              <Text style={[styles.skipText, { color: currentTheme.textSecondary}]}>Pular</Text>
             </TouchableOpacity>
           )}
 
@@ -104,29 +116,55 @@ export default function Onboarding({ navigation, onFinish }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1},
   wrapper: {
     flex: 1,
     paddingHorizontal: 25,
-    paddingTop: 10,
     justifyContent: 'space-between',
-    paddingBottom: 70,
-    marginTop: '30',
+    marginTop: height * 0.035,
   },
-  mainImage: { width: '100%', height: width * 0.91, borderRadius: 30, resizeMode: 'cover' },
-  textBlock: { marginTop: -5,},
-  title: { marginBottom: '10',fontSize: 30, fontWeight: '900', color: '#000', lineHeight: 34, textAlign:'center', },
+  mainImage: { 
+    width: '100%', 
+    height: height * 0.44,
+    borderRadius: 30, 
+    resizeMode: 'cover' 
+  },
+  textBlock: { 
+    marginVertical: 2,
+  },
+  title: { 
+    fontSize: width > 360 ? 31 : 24, // Fonte menor em telas pequenas
+    fontWeight: '900', 
+    lineHeight: 34, 
+    textAlign:'center', 
+  },
   greenText: { color: '#47e426' },
-  description: { fontSize: 16, color: '#666', marginTop: 10, lineHeight: 24, textAlign:'center', },
-  dotsContainer: { flexDirection: 'row', justifyContent: 'center', marginVertical: 10, marginTop:'-5', },
-  dot: { height: 10, borderRadius: 5, marginHorizontal: 5 },
-  dotActive: { width: 25, backgroundColor: '#47e426' },
-  dotInactive: { width: 10, backgroundColor: '#cef3c6' },
+  description: { 
+    fontSize: 16, 
+    marginTop: 12, 
+    lineHeight: 24, 
+    textAlign:'center', 
+  },
+  dotsContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    marginVertical: 10,
+  },
+  dot: { 
+    height: 10, 
+    borderRadius: 5, 
+    marginHorizontal: 5 
+  },
+  dotActive: { 
+    width: 25, 
+    backgroundColor: '#47e426' 
+  },
   
   footer: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
   },
   footerCentered: {
     justifyContent: 'center', 
@@ -134,31 +172,29 @@ const styles = StyleSheet.create({
   skipContainer: {
     marginLeft: 30,
     padding: 15,
-    marginRight: 65
+    marginRight: 60
   },
   skipText: { 
-    fontSize: 16, 
-    color: '#999',
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
   },
   button: {
     backgroundColor: '#47e426',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 10, // Reduzi um pouco para a seta colar mais na borda
+    paddingVertical: 11,
+    paddingHorizontal: 20,
     borderRadius: 30,
-    width:'45%',
-    justifyContent: 'space-between', // ISSO joga a seta para o final
+    minWidth: width * 0.4,
+    justifyContent: 'space-between',
   },
   buttonFull: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    width: '60%', // Alterado para 100% para ocupar a largura do wrapper
+    width: '70%',
   },
   buttonText: { 
     color: '#fff', 
     fontSize: 18, 
     fontWeight: 'bold',
+    marginRight: 10,
   },
 });

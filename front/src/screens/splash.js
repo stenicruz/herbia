@@ -1,9 +1,25 @@
 import  { React, useEffect, useRef } from 'react';
-import { View, Text, Image, StyleSheet, StatusBar, Animated, Easing } from 'react-native';
+import { 
+  View,
+  Text, 
+  Image, 
+  StyleSheet, 
+  StatusBar, 
+  Animated, 
+  Easing,
+  Dimensions
+} from 'react-native';
+import { THEME } from '../styles/Theme';
+import { useTheme } from '../context/ThemeContext';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function SplashScreen({ onFinish }) {
+  const { isDarkMode } = useTheme();
   const progress = useRef(new Animated.Value(0)).current;
   const contentOpacity = useRef(new Animated.Value(1)).current;
+
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
   useEffect(() => {
     // 1. Animação da barra
@@ -17,7 +33,7 @@ export default function SplashScreen({ onFinish }) {
         // 2. Fade out apenas do conteúdo
         Animated.timing(contentOpacity, {
           toValue: 0,
-          duration: 550,
+          duration: 5250,
           useNativeDriver: true,
         }).start(() => {
           if (onFinish) onFinish();
@@ -27,23 +43,28 @@ export default function SplashScreen({ onFinish }) {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
+      <StatusBar 
+        barStyle={isDarkMode ? "light-content" : "dark-content"} 
+        backgroundColor={currentTheme.background} 
+      />
       
       {/* Envolvemos apenas o que deve sumir nesta Animated.View */}
       <Animated.View style={[styles.innerContent, { opacity: contentOpacity }]}>
         
         <View style={styles.centerContent}>
           <Image 
-            source={require('../../assets/logo1.png')} 
+            source={isDarkMode ? require('../../assets/logo2.png') : require('../../assets/logo1.png')} 
             style={styles.logo}
           />
-          <Text style={styles.title}>Herbia</Text>
-          <Text style={styles.tagline}>Bem-estar das Plantas e Diagnósticos</Text>
+          <Text style={[styles.title, { color: currentTheme.textPrimary }]}>Herbia</Text>
+          <Text style={[styles.tagline, { color: currentTheme.text3 }]}>
+            Bem-estar das Plantas e Diagnósticos
+          </Text>
         </View>
 
         <View style={styles.loaderContainer}>
-          <View style={styles.progressBarBackground}>
+          <View style={[styles.progressBarBackground, { backgroundColor: isDarkMode ? '#333' : '#E0E0E0' }]}>
             <Animated.View 
               style={[
                 styles.progressBarFill, 
@@ -51,7 +72,8 @@ export default function SplashScreen({ onFinish }) {
                   width: progress.interpolate({
                     inputRange: [0, 1],
                     outputRange: ['0%', '100%']
-                  }) 
+                  }),
+                  backgroundColor: THEME.primary
                 }
               ]} 
             />
@@ -64,52 +86,49 @@ export default function SplashScreen({ onFinish }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
+  container: { flex: 1 },
   innerContent: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 150,
+    // Em vez de padding fixo, usamos proporção
+    justifyContent: 'space-around', 
+    paddingVertical: SCREEN_HEIGHT * 0.1, // 10% da altura da tela
   },
   centerContent: {
     alignItems: 'center',
     marginTop: 10,
   },
   logo: {
-    width: 190,
-    height: 190,
+    // Logo proporcional à altura da tela
+    width: SCREEN_HEIGHT * 0.25, 
+    height: SCREEN_HEIGHT * 0.25,
     resizeMode: 'contain',
-    backgroundColor: 'transparent',
   },
   title: {
-    fontSize: 46,
+    // Fonte um pouco menor para não quebrar em telas estreitas
+    fontSize: SCREEN_HEIGHT > 700 ? 46 : 38, 
     fontWeight: '500',
-    color: '#000',
-    marginTop: 13,
+    marginTop: 10,
   },
   tagline: {
     fontSize: 14,
-    color: '#828282',
     textAlign: 'center',
     marginTop: 8,
+    paddingHorizontal: 20,
   },
-  loaderContainer: {
-    width: '50%',
-    alignSelf: 'center'
+  loaderContainer: { 
+    width: '60%',
+    alignSelf: 'center',
+    marginBottom: 20
   },
   progressBarBackground: {
     width: '100%',
     height: 6,
-    backgroundColor: '#E0E0E0',
     borderRadius: 10,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#47e426',
     borderRadius: 10,
   },
 });

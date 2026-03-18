@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
+import { useTheme } from '../context/ThemeContext';
+import { THEME } from '../styles/Theme';
 
 export const CustomInput = ({ 
   label, 
@@ -11,19 +13,32 @@ export const CustomInput = ({
   ...props 
 }) => {
   const [secure, setSecure] = useState(isPassword);
+  const [isFocused, setIsFocused] = useState(false);
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
   return (
     <View style={[styles.wrapper, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={[styles.label, { color: currentTheme.textPrimary }]}>
+          {label}
+        </Text>
+      )}
       
       <View style={[
         styles.container, 
-        error && styles.errorBorder,
-        // Adiciona um leve destaque quando o input recebe foco (opcional)
+        { 
+          backgroundColor: isDarkMode ? '#121411' : '#FDFDFD',
+          borderColor: error 
+            ? '#FF4444' 
+            : isFocused 
+              ? THEME.primary 
+              : isDarkMode ? '#222' : '#E8E8E8'
+        }
       ]}>
         {Icon && (
           <Icon 
-            color="#828282" 
+            color={isFocused ? THEME.primary : (isDarkMode ? '#aca7a7' : '#828282')} 
             size={20} 
             style={styles.icon} 
             strokeWidth={2}
@@ -31,10 +46,12 @@ export const CustomInput = ({
         )}
         
         <TextInput 
-          style={styles.input} 
+          style={[styles.input, { color: currentTheme.textPrimary }]} 
           secureTextEntry={secure}
-          placeholderTextColor="#999"
+          placeholderTextColor={isDarkMode ? '#949292' : '#999'}
           autoCapitalize="none"
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           {...props} 
         />
 
@@ -42,11 +59,12 @@ export const CustomInput = ({
           <TouchableOpacity 
             onPress={() => setSecure(!secure)}
             style={styles.eyeBtn}
+            activeOpacity={0.7}
           >
             {secure ? (
-              <EyeOff color="#999" size={20} />
+              <EyeOff color={isDarkMode ? '#949292' : '#999'} size={20} />
             ) : (
-              <Eye color="#999" size={20} />
+              <Eye color={isDarkMode ? '#949292' : '#999'} size={20} />
             )}
           </TouchableOpacity>
         )}
@@ -64,30 +82,23 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: '#333',
     marginBottom: 8,
-    fontWeight: '550',
+    fontWeight: '600',
     marginLeft: 4,
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FDFDFD', 
-    borderWidth: 1, 
-    borderColor: '#E8E8E8',
-    borderRadius: 12,
+    borderWidth: 1.5, // Aumentado levemente para destacar o foco
+    borderRadius: 15,
     paddingHorizontal: 15,
-    height: 55,
-  },
-  errorBorder: {
-    borderColor: '#FF4444',
+    height: 58, // Um pouco mais alto para uma pegada mais moderna
   },
   icon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    color: '#000',
     fontSize: 16,
     height: '100%',
   },
@@ -98,6 +109,7 @@ const styles = StyleSheet.create({
     color: '#FF4444',
     fontSize: 12,
     marginTop: 5,
-    marginLeft: 5,
+    marginLeft: 8,
+    fontWeight: '500',
   }
 });

@@ -23,7 +23,7 @@ export default function ProfileScreen({ route }) {
   const navigation = useNavigation();
   
   // Captura se o usuário é admin via parâmetros de rota (ou mude para seu estado global)
-  const { isAdminView } = route.params || { isAdminView: true }; 
+  const { isAdminView } = route.params || { isAdminView: false }; 
   
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);

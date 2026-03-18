@@ -7,54 +7,68 @@ import {
   KeyboardAvoidingView, 
   Platform,
   ScrollView,
-  StatusBar 
+  StatusBar,
+  Dimensions,
+  TouchableOpacity
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Mail, Lock } from 'lucide-react-native';
 
-// Importando nossos componentes centralizados
+import { THEME } from '../styles/Theme';
+import { useTheme } from '../context/ThemeContext';
 import { CustomInput, PrimaryButton } from '../components/central.js';
+
+const { height } = Dimensions.get('window');
 
 export default function Login({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
   const isAdmin = true; 
 
   const handleLogin = () => {
-    if (isAdmin) { 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'AdminMain' }],
-      });
-    } else {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Main' }],
-      });
-    }
+    navigation.reset({
+      index: 0,
+      routes: [{ name: isAdmin ? 'AdminMain' : 'Main' }],
+    });
   };
 
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
+      <StatusBar 
+        barStyle={isDarkMode ? "light-content" : "dark-content"} 
+        backgroundColor={currentTheme.background} 
+      /> 
+
       <ScrollView 
+        // AJUSTE 2: Garantir que o fundo do ScrollView acompanhe o tema
+        style={{ backgroundColor: currentTheme.background }}
         contentContainerStyle={[
           styles.scrollContent, 
-          { paddingBottom: insets.bottom + 10 } 
+          { 
+            paddingBottom: insets.bottom + 20,
+            backgroundColor: currentTheme.background // Força a cor aqui também
+          } 
         ]} 
         showsVerticalScrollIndicator={false}
+        // AJUSTE 3: Impede que o scroll "descole" do topo/fundo e mostre o que está atrás
         bounces={false}
+        overScrollMode="never" 
       >
-        <View style={[styles.inner, { paddingTop: insets.top + 45 }]}>
-          <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />  
+        <View style={[styles.inner, { paddingTop: insets.top + 20 }]}>
           
           {/* Logo e Cabeçalho */}
           <View style={styles.header}>
-            <Image source={require('../../assets/logo1.png')} style={styles.logoIcon} />
-            <Text style={styles.brandName}>Herbia</Text>
-            <Text style={styles.tagline}>Sua planta, nossa paixão</Text>
+            <Image 
+              source={isDarkMode ? require('../../assets/logo2.png') : require('../../assets/logo1.png')} 
+              style={styles.logoIcon} 
+            />
+            <Text style={[styles.brandName, { color: currentTheme.textPrimary }]}>Herbia</Text>
+            <Text style={[styles.tagline, { color: currentTheme.textSecondary }]}>Sua planta, nossa paixão</Text>
           </View>
 
           {/* Formulário */}
@@ -64,7 +78,6 @@ export default function Login({ navigation }) {
               placeholder="nome@exemplo.com"
               icon={Mail}
               keyboardType="email-address"
-              autoCapitalize="none"
             />
 
             <CustomInput 
@@ -78,24 +91,30 @@ export default function Login({ navigation }) {
               title="Entrar" 
               onPress={handleLogin} 
               borderRadius={12}
-              style={{ marginTop: 6 }}
+              style={{ marginTop: 10 }}
             />
           </View>
 
           {/* Divisor "ou" */}
           <View style={styles.dividerContainer}>
-            <View style={styles.line} />
-            <Text style={styles.dividerText}>ou</Text>
-            <View style={styles.line} />
+            <View style={[styles.line, { backgroundColor: isDarkMode ? '#222' : '#EEEEEE' }]} />
+            <Text style={[styles.dividerText, { color: currentTheme.textSecondary }]}>ou</Text>
+            <View style={[styles.line, { backgroundColor: isDarkMode ? '#222' : '#EEEEEE' }]} />
           </View>
 
-          {/* Botão Google - Usando PrimaryButton customizado */}
+          {/* Botão Google - Adaptado para Dark Mode */}
           <PrimaryButton 
             title="Continue com o Google"
             onPress={() => {}}
             borderRadius={12}
-            style={styles.googleButton}
-            textStyle={styles.googleButtonText}
+            style={[
+              styles.googleButton, 
+              { 
+                backgroundColor: isDarkMode ? '#121411' : '#FFFFFF',
+                borderColor: isDarkMode ? '#333' : '#D0D0D0' 
+              }
+            ]}
+            textStyle={{ color: isDarkMode ? '#FFF' : '#3C4043' }}
             icon={() => (
               <Image 
                 source={{ uri: 'https://pngimg.com/uploads/google/google_PNG19635.png' }} 
@@ -103,7 +122,6 @@ export default function Login({ navigation }) {
               />
             )}
             reverse={true}
-            contentAlign="center"
             gap={15}
           />
 
@@ -114,15 +132,18 @@ export default function Login({ navigation }) {
               variant="outline"
               borderRadius={12}
               onPress={() => navigation.navigate('Register')}
-              textStyle={{ color: '#292727' }}
+              style={{ borderColor: isDarkMode ? '#333' : THEME.primary }}
+              textStyle={{ color: isDarkMode ? '#FFF' : '#292727' }}
             />
 
-            <PrimaryButton 
-              title="Esqueceu a palavra-passe?"
+            <TouchableOpacity 
               onPress={() => navigation.navigate('ForgotPassword')}
-              style={{ backgroundColor: 'transparent', elevation: 0 }}
-              textStyle={styles.forgotPasswordText}
-            />
+              style={styles.forgotBtn}
+            >
+              <Text style={[styles.forgotPasswordText, { color: currentTheme.textSecondary }]}>
+                Esqueceu a palavra-passe?
+              </Text>
+            </TouchableOpacity>
           </View>
 
         </View>
@@ -132,31 +153,42 @@ export default function Login({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  inner: { flex: 1, paddingHorizontal: 30 },
-  header: { alignItems: 'center', marginBottom: 20, marginTop: -30 },
-  logoIcon: { width: 120, height: 120, resizeMode: 'contain' },
-  brandName: { fontSize: 32, fontWeight: '500', color: '#000', marginTop: -15, marginBottom: 5 },
-  tagline: { fontSize: 14, color: '#666', marginBottom: 8 },
-  form: { marginTop: 10 },
+  container: { flex: 1 },
+  scrollContent: { flexGrow: 1, paddingHorizontal: 30 },
+  inner: { flex: 1, justifyContent: 'center' },
+  header: { alignItems: 'center', marginBottom: 30 },
+  logoIcon: { 
+    width: height * 0.13, 
+    height: height * 0.14, 
+    resizeMode: 'contain' 
+  },
+  brandName: { 
+    fontSize: 32, 
+    fontWeight: 'bold', 
+    marginTop: -10 
+  },
+  tagline: { 
+    fontSize: 14, 
+    marginTop: 5 
+  },
+  form: { width: '100%' },
   
-  dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
-  line: { flex: 1, height: 1, backgroundColor: '#EEEEEE' },
-  dividerText: { marginHorizontal: 15, color: '#999', fontSize: 14 },
+  dividerContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginVertical: 25 
+  },
+  line: { flex: 1, height: 1 },
+  dividerText: { marginHorizontal: 15, fontSize: 14 },
 
   googleButton: {
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#D0D0D0',
     elevation: 0,
+    height: 55,
   },
   googleIcon: { width: 30, height: 30, resizeMode: 'contain' },
-  googleButtonText: { 
-    fontSize: 16, 
-    color: '#3C4043', 
-    fontWeight: '500',
-  },
   
-  footerOptions: { gap: 5, marginTop: 5 },
-  forgotPasswordText: { color: '#888', fontSize: 14, fontWeight: '400' }
+  footerOptions: { gap: 10, marginTop: 20 },
+  forgotBtn: { alignSelf: 'center', padding: 10 },
+  forgotPasswordText: { fontSize: 14, fontWeight: '500' }
 });
