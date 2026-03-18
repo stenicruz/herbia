@@ -65,6 +65,7 @@ export default function HomeScreen({navigation}) {
         title={'Tirar Uma Foto'}
         textStyle={{fontSize: 17}}
         style={{width: '55%', height: 47, marginTop: 200}}
+        onPress={() => navigation.navigate('CameraScanner')}
         />
         </View>
 
@@ -73,7 +74,7 @@ export default function HomeScreen({navigation}) {
           <Text style={styles.sectionTitle}>Culturas Suportadas</Text>
           <View style={styles.culturaRow}>
             {culturas.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.culturaItem}>
+              <View key={item.id} style={styles.culturaItem}>
                 <View style={styles.circuloVerdeEscuro}>
                   {/* A imagem entra aqui preenchendo o círculo */}
                   <Image 
@@ -83,21 +84,17 @@ export default function HomeScreen({navigation}) {
                   />
                 </View>
                 <Text style={styles.culturaLabel}>{item.nome}</Text>
-              </TouchableOpacity>
+              </View>
             ))}
-            <TouchableOpacity style={styles.addBtn}>
-              <Plus color="#47e426" size={35} strokeWidth={3} />
+            <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('ShowCulture')}>
+              <Plus color="#47e426" size={35} strokeWidth={3} onC/>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      <BottomTabBar 
-        state="Home" // Indica que esta tela é a ativa
-        navigation={navigation} 
-        tabs={abas} 
-      />
       
+
     </View>
   );
 }

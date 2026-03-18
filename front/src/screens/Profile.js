@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { 
   StyleSheet, View, Text, TouchableOpacity, ScrollView, Platform, Image, Switch, Modal 
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
   ChevronRight, 
@@ -11,15 +12,16 @@ import {
   Sun,     // Ícone para modo claro
   Moon,    // Ícone para modo escuro
   LogOut,
-  Home, 
-  History, 
-  Camera, 
-  User,
   Check
 } from 'lucide-react-native';
 
+import { PrimaryButton, ConfirmationModal } from '../components/central';
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [language, setLanguage] = useState('Português');
@@ -39,7 +41,7 @@ export default function ProfileScreen() {
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <Image 
-              source={{ uri: 'https://via.placeholder.com/150' }} 
+              source={require('../../assets/user_profile_photo/218303075.jpeg')} 
               style={styles.avatar} 
             />
           </View>
@@ -50,7 +52,7 @@ export default function ProfileScreen() {
         {/* Opções de Menu */}
         <View style={styles.menuContainer}>
           
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('EditProfile')}>
             <View style={styles.menuItemLeft}>
               <View style={styles.iconBox}>
                 <Pencil color={activeColor} size={22} />
@@ -97,7 +99,7 @@ export default function ProfileScreen() {
             />
           </View>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Support')}>
             <View style={styles.menuItemLeft}>
               <View style={styles.iconBox}>
                 <Headset color={activeColor} size={22} />
@@ -107,10 +109,18 @@ export default function ProfileScreen() {
             <ChevronRight color="#666" size={20} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.logoutButton}>
-            <LogOut color="#FFF" size={24} style={{ marginRight: 10 }} />
-            <Text style={styles.logoutText}>Sair da Conta</Text>
-          </TouchableOpacity>
+          {/* Botão de Sair usando PrimaryButton */}
+          <View style={{ marginTop: 10 }}>
+            <PrimaryButton 
+              title="Sair da Conta"
+              icon={LogOut}
+              reverse='true'
+              onPress={() => setLogoutModalVisible(true)}
+              iconSize={25}
+              gap={15}
+              variant="primary"
+            />
+          </View>
 
         </View>
       </ScrollView>
@@ -150,30 +160,23 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+      {/* MODAL DE CONFIRMAÇÃO DE SAÍDA */}
+      <ConfirmationModal 
+        visible={logoutModalVisible}
+        title="Encerrar Sessão?"
+        description="Você terá que inserir suas credenciais novamente para acessar o Herbia."
+        confirmText="Sair Agora"
+        variant="danger"
+        onConfirm={() => {
+          setLogoutModalVisible(false);
+          console.log("Usuário deslogado");
+          // navigation.replace('Login'); // Exemplo de redirecionamento
+        }}
+        onClose={() => setLogoutModalVisible(false)}
+      />
+
       {/* MENU INFERIOR */}
-      <View style={[
-        styles.tabBar, 
-        { paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom + 15 }
-      ]}>
-        <TouchableOpacity style={styles.tabItem}>
-          <Home color={inactiveColor} size={26} />
-          <Text style={styles.tabLabel}>Casa</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <History color={inactiveColor} size={26} />
-          <Text style={styles.tabLabel}>Histórico</Text>
-        </TouchableOpacity>
-        <View style={styles.cameraTabWrapper}>
-          <TouchableOpacity style={styles.cameraTabBtn}>
-            <Camera color="#47e426" size={47} fill="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.tabLabel}>Câmera</Text>
-        </View>
-        <TouchableOpacity style={styles.tabItem}>
-          <User color={activeColor} size={26} fill={activeColor} />
-          <Text style={[styles.tabLabel, { color: activeColor }]}>Perfil</Text>
-        </TouchableOpacity>
-      </View>
+      
     </SafeAreaView>
   );
 }

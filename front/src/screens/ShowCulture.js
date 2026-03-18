@@ -5,20 +5,20 @@ import {
   Text, 
   TouchableOpacity, 
   ScrollView, 
-  Platform 
+  Image 
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-// Trocado ArrowLeft por ChevronLeft
+
+import { AppHeader } from '../components/AppHeader';
+
 import { ChevronLeft } from 'lucide-react-native';
 
-const CULTURAS = [
-  { id: '1', nome: 'Doença' },
-  { id: '2', nome: 'Doença' },
-  { id: '3', nome: 'Doença' },
-  { id: '4', nome: 'Doença' },
-  { id: '5', nome: 'Doença' },
-  { id: '6', nome: 'Doença' },
-];
+const culturas = [
+    { id: 1, nome: 'Tomate', img: require('../../assets/tomate.jpeg') },
+    { id: 2, nome: 'Batata', img: require('../../assets/batata.jpeg') },
+    { id: 3, nome: 'Milho', img: require('../../assets/milho.jpeg') },
+    { id: 4, nome: 'Mandioca', img: require('../../assets/mandioca.jpeg') },
+  ];
 
 export default function CulturesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -26,16 +26,10 @@ export default function CulturesScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       
-      {/* Header com ChevronLeft */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation?.goBack()}
-        >
-          <ChevronLeft color="#1B1919" size={32} strokeWidth={2.5} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Culturas Suportadas</Text>
-      </View>
+      {/* Header */}
+      <AppHeader
+      title={'Culturas Suportadas'}
+       />
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
@@ -48,19 +42,20 @@ export default function CulturesScreen({ navigation }) {
         </View>
 
         {/* Grid Container */}
-        <View style={[
-          styles.gridWrapper, 
-          { paddingBottom: insets.bottom > 0 ? insets.bottom : 30 }
-        ]}>
-          <View style={styles.grid}>
-            {CULTURAS.map((item) => (
-              <View key={item.id} style={styles.cultureItem}>
-                <View style={styles.circle} />
-                <Text style={styles.cultureName}>{item.nome}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        <View style={styles.grid}>
+        {culturas.map((item) => ( // Corrigido para minúsculo
+          <TouchableOpacity key={item.id} style={styles.cultureItem} activeOpacity={0.7}>
+            <View style={styles.circle}>
+              <Image 
+                source={item.img} 
+                style={styles.cultureImage} 
+                resizeMode="cover" 
+              />
+            </View>
+            <Text style={styles.cultureName}>{item.nome}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -120,16 +115,35 @@ const styles = StyleSheet.create({
     width: 82,
     height: 82,
     borderRadius: 41,
-    backgroundColor: '#233814',
+    backgroundColor: '#F9F9F9', // Fundo claro para destacar a planta
     marginBottom: 10,
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    overflow: 'hidden', // Corta a imagem no formato do círculo
+    borderWidth: 2,
+    borderColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cultureImage: {
+    width: '100%',
+    height: '100%',
+  },
+  gridWrapper: {
+    flex: 1,
+    backgroundColor: '#f7faf6', // Um tom de verde quase branco, muito elegante
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    paddingTop: 35,
+    paddingHorizontal: 10,
+    minHeight: 600, // Garante que o fundo colorido cubra a tela
   },
   cultureName: {
     fontSize: 14,
     color: '#1B1919',
-    fontWeight: '500',
+    fontWeight: '700', // Um pouco mais de peso para facilitar a leitura
+    textAlign: 'center',
   },
 });

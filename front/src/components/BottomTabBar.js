@@ -1,61 +1,64 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Home, History, Camera, User } from 'lucide-react-native'; 
 
-export const BottomTabBar = ({ state, navigation, tabs }) => {
+export const BottomTabBar = ({ state, navigation }) => {
   const insets = useSafeAreaInsets();
   const activeColor = '#47e426';
   const inactiveColor = '#999';
+
+  // Configuração das abas que REALMENTE estão no TabNavigator
+  const screenConfigs = {
+    Home: { label: 'Casa', icon: Home },
+    History: { label: 'Histórico', icon: History },
+    Profile: { label: 'Perfil', icon: User },
+  };
+
+  const tabs = state.routes; // Home, History, Profile
 
   return (
     <View style={[
       styles.tabBar, 
       { paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom + 15 }
     ]}>
-      {tabs.map((tab, index) => {
-        const isFocused = state === tab.name;
-        const isCamera = tab.name === 'Camera';
+      
+      {/* 1. Renderiza as duas primeiras abas (Home e History) */}
+      {tabs.slice(0, 2).map((route, index) => {
+        const isFocused = state.index === index;
+        const config = screenConfigs[route.name];
+        const Icon = config.icon;
 
-        // 1. Caso Especial: Botão da Câmera (Sempre preenchido de branco no centro)
-        if (isCamera) {
-          return (
-            <View key={index} style={styles.cameraTabWrapper}>
-              <TouchableOpacity 
-                style={styles.cameraTabBtn}
-                onPress={() => navigation.navigate(tab.screen)}
-                activeOpacity={0.8}
-              >
-                <tab.icon color="#47e426" size={47} fill="#fff" />
-              </TouchableOpacity>
-              <Text style={[
-              styles.tabLabel, 
-              { color: inactiveColor, fontWeight: '600' }
-            ]}>Câmera</Text>
-            </View>
-          );
-        }
-
-        // 2. Botões Normais (Casa, Histórico, Perfil)
         return (
-          <TouchableOpacity
-            key={index}
-            style={styles.tabItem}
-            onPress={() => navigation.navigate(tab.screen)}
-            activeOpacity={0.7}
-          >
-            <tab.icon 
-              color={isFocused ? activeColor : inactiveColor} 
-              size={26} 
-              // O SEGREDO ESTÁ AQUI: se estiver focado, preenche com a cor ativa
-              fill={isFocused ? activeColor : 'none'} 
-              strokeWidth={isFocused ? 2.5 : 2}
-            />
-            <Text style={[
-              styles.tabLabel, 
-              { color: isFocused ? activeColor : inactiveColor, fontWeight: isFocused ? '700' : '600' }
-            ]}>
-              {tab.label}
-            </Text>
+          <TouchableOpacity key={route.key} style={styles.tabItem} onPress={() => navigation.navigate(route.name)}>
+            <Icon color={isFocused ? activeColor : inactiveColor} size={26} fill={isFocused && route.name !== 'History' ? activeColor : 'none'} />
+            <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>{config.label}</Text>
+          </TouchableOpacity>
+        );
+      })}
+
+      {/* 2. BOTÃO DA CÂMERA (Manual e fixo no meio) */}
+      <View style={styles.cameraTabWrapper}>
+        <TouchableOpacity 
+          style={styles.cameraTabBtn}
+          onPress={() => navigation.navigate('CameraScanner')} // Navega para o Stack
+          activeOpacity={0.8}
+        >
+          <Camera color="#47e426" size={47} fill="#fff" />
+        </TouchableOpacity>
+        <Text style={[styles.tabLabel, { color: inactiveColor }]}>Câmera</Text>
+      </View>
+
+      {/* 3. Renderiza a última aba (Profile) */}
+      {tabs.slice(2).map((route, index) => {
+        const isFocused = state.index === index + 2; // +2 porque pulamos as duas primeiras
+        const config = screenConfigs[route.name];
+        const Icon = config.icon;
+
+        return (
+          <TouchableOpacity key={route.key} style={styles.tabItem} onPress={() => navigation.navigate(route.name)}>
+            <Icon color={isFocused ? activeColor : inactiveColor} size={26} fill={isFocused ? activeColor : 'none'} />
+            <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>{config.label}</Text>
           </TouchableOpacity>
         );
       })}

@@ -1,70 +1,114 @@
 import React, { useState } from 'react';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Image 
+  StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, Image, KeyboardAvoidingView, Platform 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  ChevronLeft, 
+import * as ImagePicker from 'expo-image-picker';
+import {
   Camera, 
   User, 
   Mail, 
   Lock, 
-  Eye,      // Ícone para quando a senha está visível
-  EyeOff,   // Ícone para quando a senha está oculta
   ShieldCheck
 } from 'lucide-react-native';
 
+import { AppHeader, PrimaryButton, CustomInput } from '../components/central';
+
 export default function EditProfileScreen({ navigation }) {
-  // Criamos um estado individual para cada campo de senha
-  const [showCurrentPass, setShowCurrentPass] = useState(false);
-  const [showNewPass, setShowNewPass] = useState(false);
-  const [showConfirmPass, setShowConfirmPass] = useState(false);
+ 
+  const [name, setName] = useState('Sebastião Miguel');
+  const [email, setEmail] = useState('sebastiao@gmail.com');
+  const [avatar, setAvatar] = useState('https://github.com/identicon.png');
+  
+  // Estados para senhas
+  const [currentPass, setCurrentPass] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
   
   const activeColor = '#47e426';
 
+  // Função para selecionar/tirar foto
+  const handlePickImage = async () => {
+    Alert.alert(
+      "Alterar Foto",
+      "Escolha uma opção:",
+      [
+        {
+          text: "Tirar Foto",
+          onPress: async () => {
+            const result = await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.7,
+            });
+            if (!result.canceled) setAvatar(result.assets[0].uri);
+          }
+        },
+        {
+          text: "Escolher da Galeria",
+          onPress: async () => {
+            const result = await ImagePicker.launchImageLibraryAsync({
+              allowsEditing: true,
+              aspect: [1, 1],
+              quality: 0.7,
+            });
+            if (!result.canceled) setAvatar(result.assets[0].uri);
+          }
+        },
+        { text: "Cancelar", style: "cancel" }
+      ]
+    );
+  };
+
+  const handleSave = () => {
+    // Lógica de salvamento aqui
+    Alert.alert("Sucesso", "Perfil atualizado com sucesso!");
+    navigation.goBack();
+  };
+
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack()}>
-          <ChevronLeft color="#1B1919" size={32} strokeWidth={2.5} />
-        </TouchableOpacity>
-      </View>
+      <AppHeader title="Editar Perfil" onBack={() => navigation.goBack()} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+
+      <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled" // Permite clicar nos botões mesmo com teclado aberto
+        >
         
         <View style={styles.avatarSection}>
-          <View style={styles.avatarContainer}>
-            <Image 
-              source={{ uri: 'https://via.placeholder.com/150' }} 
-              style={styles.avatar} 
-            />
-            <TouchableOpacity style={styles.cameraOverlay}>
-              <Camera color="#FFF" size={20} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={handlePickImage} activeOpacity={0.8}>
+            <View style={styles.avatarContainer}>
+              <Image source={{ uri: avatar }} style={styles.avatar} />
+              <View style={styles.cameraOverlay}>
+                <Camera color="#FFF" size={20} />
+              </View>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.inputSection}>
-          <Text style={styles.label}>Nome Completo</Text>
-          <View style={styles.inputContainer}>
-            <User color="#BBB" size={20} />
-            <TextInput 
-              style={styles.input} 
-              placeholder="Sebastião Miguel" 
-              placeholderTextColor="#BBB" // Garante que o placeholder apareça
-            />
-          </View>
+          <CustomInput 
+            label="Nome Completo"
+            placeholder="Seu nome"
+            value={name}
+            onChangeText={setName}
+            icon= {User} // Supondo que seu CustomInput mapeia strings para ícones
+          />
 
-          <Text style={styles.label}>E-mail</Text>
-          <View style={styles.inputContainer}>
-            <Mail color="#BBB" size={20} />
-            <TextInput 
-              style={styles.input} 
-              placeholder="sebastiao@gmail.com" 
-              placeholderTextColor="#BBB"
-              keyboardType="email-address" 
-            />
-          </View>
+          <CustomInput 
+            label="E-mail"
+            placeholder="seuemail@gmail.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            icon= {Mail}
+          />
         </View>
 
         <View style={styles.passwordSection}>
@@ -75,64 +119,52 @@ export default function EditProfileScreen({ navigation }) {
 
           <View style={styles.passwordCard}>
             {/* Palavra-Passe Actual */}
-            <Text style={styles.label}>Palavra-Passe Actual</Text>
-            <View style={styles.inputContainer}>
-              <Lock color="#BBB" size={20} />
-              <TextInput 
-                style={styles.input} 
-                secureTextEntry={!showCurrentPass} 
-                placeholder="**********" 
-                placeholderTextColor="#BBB"
-              />
-              <TouchableOpacity onPress={() => setShowCurrentPass(!showCurrentPass)}>
-                {showCurrentPass ? <Eye color="#BBB" size={22} /> : <EyeOff color="#BBB" size={22} />}
-              </TouchableOpacity>
-            </View>
+            <CustomInput 
+              label="Palavra-Passe Actual"
+              placeholder="**********"
+              value={currentPass}
+              onChangeText={setCurrentPass}
+              isPassword={true}
+              icon= {Lock}
+            />
 
             {/* Nova Palavra-passe */}
-            <Text style={styles.label}>Nova Palavra-passe</Text>
-            <View style={styles.inputContainer}>
-              <Lock color="#BBB" size={20} />
-              <TextInput 
-                style={styles.input} 
-                secureTextEntry={!showNewPass} 
-                placeholder="**********" 
-                placeholderTextColor="#BBB"
-              />
-              <TouchableOpacity onPress={() => setShowNewPass(!showNewPass)}>
-                {showNewPass ? <Eye color="#BBB" size={22} /> : <EyeOff color="#BBB" size={22} />}
-              </TouchableOpacity>
-            </View>
+            <CustomInput 
+              label="Nova Palavra-passe"
+              placeholder="**********"
+              value={newPass}
+              onChangeText={setNewPass}
+              isPassword={true}
+              icon= {Lock}
+            />
 
             {/* Confirmar Palavra-Passe */}
-            <Text style={styles.label}>Confirmar Palavra-Passe</Text>
-            <View style={styles.inputContainer}>
-              <Lock color="#BBB" size={20} />
-              <TextInput 
-                style={styles.input} 
-                secureTextEntry={!showConfirmPass} 
-                placeholder="**********" 
-                placeholderTextColor="#BBB"
-              />
-              <TouchableOpacity onPress={() => setShowConfirmPass(!showConfirmPass)}>
-                {showConfirmPass ? <Eye color="#BBB" size={22} /> : <EyeOff color="#BBB" size={22} />}
-              </TouchableOpacity>
-            </View>
+            <CustomInput 
+              label="Confirmar Palavra-Passe"
+              placeholder="**********"
+              value={confirmPass}
+              onChangeText={setConfirmPass}
+              isPassword={true}
+              icon= {Lock}
+            />
           </View>
         </View>
 
-        <TouchableOpacity style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Salvar Alterações</Text>
-        </TouchableOpacity>
+        <View style={{ marginTop: 20 }}>
+          <PrimaryButton
+          textStyle={{fontSize: 18}} 
+            title="Salvar Alterações" 
+            onPress={handleSave} 
+          />
+        </View>
 
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   safeContainer: { flex: 1, backgroundColor: '#FFF' },
-  header: { paddingHorizontal: 15, paddingVertical: 10 },
   scrollContent: { paddingHorizontal: 25, paddingBottom: 40 },
   avatarSection: { alignItems: 'center', marginVertical: 30 },
   avatarContainer: { width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: '#47e426', padding: 4 },
@@ -143,13 +175,6 @@ const styles = StyleSheet.create({
     borderRadius: 18, justifyContent: 'center', alignItems: 'center',
     borderWidth: 3, borderColor: '#FFF'
   },
-  label: { fontSize: 14, fontWeight: '600', color: '#666', marginBottom: 8, marginTop: 15 },
-  inputContainer: { 
-    flexDirection: 'row', alignItems: 'center', 
-    backgroundColor: '#FFFBFA', borderWidth: 1, borderColor: '#EEE', 
-    borderRadius: 12, paddingHorizontal: 15, height: 55 
-  },
-  input: { flex: 1, marginLeft: 12, color: '#1B1919', fontSize: 15 },
   passwordSection: { marginTop: 30 },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1B1919', marginLeft: 10 },
@@ -158,9 +183,4 @@ const styles = StyleSheet.create({
     borderRadius: 20, padding: 15, elevation: 2, shadowColor: '#000', 
     shadowOpacity: 0.05, shadowRadius: 10 
   },
-  saveButton: { 
-    backgroundColor: '#47e426', paddingVertical: 18, borderRadius: 15, 
-    marginTop: 30, alignItems: 'center' 
-  },
-  saveButtonText: { color: '#FFF', fontSize: 18, fontWeight: '700' }
 });

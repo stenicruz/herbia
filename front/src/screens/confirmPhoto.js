@@ -1,13 +1,43 @@
-import React from 'react';
-import { View, Image, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import React, { useState } from 'react';
+import { View, Image, StyleSheet, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, Check } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
 
+import { ConfirmationModal } from '../components/ConfirmationModal';
+
 export default function ConfirmPhoto({ route, navigation }) {
   const insets = useSafeAreaInsets();
-  // Recebemos a URI da imagem vinda do Scanner (já recortada)
   const { imageUri } = route.params;
+
+  // Estados para controle da lógica
+  const [loading, setLoading] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  const handleStartDiagnosis = async () => {
+    setLoading(true);
+
+    try {
+      // SIMULAÇÃO: Espera 2 segundos e gera um score de confiança
+      // Em produção, aqui você faria o fetch para sua API
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const mockConfidence = Math.random(); // Gera entre 0 e 1
+      console.log("Confiança da IA:", mockConfidence.toFixed(2));
+
+      if (mockConfidence < 0.4) {
+        // Se a confiança for menor que 40%, assumimos que não é uma planta ou está ruim
+        setShowErrorModal(true);
+      } else {
+        // Sucesso: Segue para a tela de resultados
+        navigation.navigate('DiagnosticResult', { imageUri, confidence: mockConfidence });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -18,6 +48,7 @@ export default function ConfirmPhoto({ route, navigation }) {
         <TouchableOpacity 
           style={styles.closeButton} 
           onPress={() => navigation.goBack()}
+          disabled={loading}
         >
           <X color="#FFF" size={30} />
         </TouchableOpacity>
@@ -34,16 +65,35 @@ export default function ConfirmPhoto({ route, navigation }) {
 
       {/* Footer com o botão de confirmação */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 40 }]}>
-        <TouchableOpacity 
-          style={styles.confirmButton}
-          onPress={() => {
-            console.log("Iniciando diagnóstico com:", imageUri);
-            // Próximo passo: navegação para tela de processamento
-          }}
-        >
-          <Check color="#FFF" size={45} strokeWidth={3} />
-        </TouchableOpacity>
+        {loading ? (
+          <ActivityIndicator size="large" color="#32D74B" />
+        ) : (
+          <TouchableOpacity 
+            style={styles.confirmButton}
+            onPress={handleStartDiagnosis}
+          >
+            <Check color="#FFF" size={45} strokeWidth={2} />
+          </TouchableOpacity>
+        )}
       </View>
+
+        <ConfirmationModal 
+        visible={showErrorModal}
+        variant='primary'
+        title="Não conseguimos identificar"
+        description="Certifique-se de que a foto está nítida e foca em uma planta. Deseja tentar novamente?"
+        confirmText="Tirar outra foto"
+        cancelText="Ir para Home"
+        onConfirm={() => {
+          setShowErrorModal(false);
+          navigation.goBack(); // Volta para a câmera
+        }}
+        onClose={() => {
+          setShowErrorModal(false);
+          navigation.navigate('Main');
+        }}
+      />
+
     </View>
   );
 }
@@ -67,11 +117,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 0,
   },
   image: {
     width: '100%',
-    height: '80%', // Deixa espaço para os botões
+    height: '500', // Deixa espaço para os botões
     borderRadius: 8,
   },
   footer: {
@@ -79,8 +129,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmButton: {
-    width: 90,
-    height: 90,
+    width: 75,
+    height: 75,
     borderRadius: 45,
     backgroundColor: '#32D74B', // Verde vibrante da imagem
     justifyContent: 'center',

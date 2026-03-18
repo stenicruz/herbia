@@ -59,7 +59,7 @@ export default function Decision({ navigation }) {
         />
 
         <PrimaryButton 
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigation.navigate('Main')}
           variant="outline"
           borderRadius={25}
           contentAlign="space-between"

@@ -5,15 +5,30 @@ import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, Zap, Image as ImageIcon, HelpCircle } from 'lucide-react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useIsFocused } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get('window');
 
-export default function CameraScanner() {
+export default function CameraScanner({navigation}) {
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused(); // Hook para saber se a tela está ativa
+  const [cameraActive, setCameraActive] = useState(false); // Novo estado
   const [permission, requestPermission] = useCameraPermissions();
   const [flash, setFlash] = useState('off');
   const [modalVisible, setModalVisible] = useState(false);
   const cameraRef = useRef(null);
+
+  // Efeito para ligar a câmera apenas quando a tela terminar de carregar
+  useEffect(() => {
+    let timer;
+    if (isFocused) {
+      // Pequeno delay de 150ms (tempo suficiente para a animação de fade acabar)
+      timer = setTimeout(() => setCameraActive(true), 350);
+    } else {
+      setCameraActive(false);
+    }
+    return () => clearTimeout(timer);
+  }, [isFocused]);
 
   useEffect(() => {
     requestPermission();
@@ -34,47 +49,40 @@ export default function CameraScanner() {
     );
   }
 
+// CORREÇÃO DA FUNÇÃO PICK IMAGE
 const pickImage = async () => {
   let result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true, // Reativamos o editor nativo
-    aspect: [1, 1],      // Forçar um quadrado ajuda a centralizar a UI longe das bordas
+    allowsEditing: true,
+    aspect: [1, 1],
     quality: 1,
   });
 
   if (!result.canceled) {
-    console.log("Imagem editada e pronta:", result.assets[0].uri);
-    // Aqui segues para o diagnóstico
+    const uriOriginal = result.assets[0].uri;
+    // Navega para a tela de confirmação
+    navigation.navigate('ConfirmPhoto', { imageUri: uriOriginal });
   }
-  if (!result.canceled) {
-  const uriOriginal = result.assets[0].uri;
-  
-  // Navega enviando a imagem
-  navigation.navigate('ConfirmPhoto', { imageUri: uriOriginal });
-}
 };
-  const takePicture = async () => {
-  if (cameraRef.current) {
-    const photo = await cameraRef.current.takePictureAsync();
-    
-    // Para a foto tirada também abrir o editor nativo:
-    let editedPhoto = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-      // Passamos a foto que acabámos de tirar como base
-      base64: false,
-    });
-    
-    if (!editedPhoto.canceled) {
-       console.log("Foto editada:", editedPhoto.assets[0].uri);
+
+const takePicture = async () => {
+  if (cameraRef.current && cameraActive) {
+    try {
+      // 1. Tira a foto e armazena o resultado em 'photo'
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 1,
+        skipProcessing: false, // Garante que a imagem seja processada antes de retornar
+      });
+      
+      // 2. Navega DIRETAMENTE para a ConfirmPhoto passando a URI da foto tirada
+      if (photo && photo.uri) {
+        navigation.navigate('ConfirmPhoto', { imageUri: photo.uri });
+      }
+
+    } catch (error) {
+      console.error("Erro ao capturar:", error);
+      Alert.alert("Erro", "Não foi possível capturar a foto. Tente novamente.");
     }
-    if (!result.canceled) {
-  const uriOriginal = result.assets[0].uri;
-  
-  // Navega enviando a imagem
-  navigation.navigate('ConfirmPhoto', { imageUri: uriOriginal });
-}
   }
 };
 
@@ -82,6 +90,7 @@ const pickImage = async () => {
     <View style={styles.container}>
       <StatusBar style="light" />
 
+      {cameraActive && (
       <CameraView 
         style={StyleSheet.absoluteFill} 
         facing="back" 
@@ -93,7 +102,7 @@ const pickImage = async () => {
           
           {/* Top Bar */}
           <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
-            <TouchableOpacity><X color="#FFF" size={28} /></TouchableOpacity>
+            <TouchableOpacity><X color="#FFF" size={28} onPress={() => navigation?.goBack()}/></TouchableOpacity>
             
             {/* Lógica de interface do Flash */}
             <TouchableOpacity onPress={() => setFlash(prev => prev === 'off' ? 'on' : 'off')}>
@@ -132,6 +141,18 @@ const pickImage = async () => {
 
         </View>
       </CameraView>
+      )}
+
+      {/* Mantemos o fundo preto e a top bar visível enquanto carrega */}
+      {!cameraActive && (
+        <View style={styles.overlayContainer}>
+           <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
+            <TouchableOpacity onPress={() => navigation?.goBack()}>
+              <X color="#FFF" size={28} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* MODAL DE DICAS */}
       <Modal
@@ -179,8 +200,8 @@ const styles = StyleSheet.create({
   bottomLeft: { bottom: 0, left: 0, borderLeftWidth: 4, borderBottomWidth: 4, borderBottomLeftRadius: 25 },
   bottomRight: { bottom: 0, right: 0, borderRightWidth: 4, borderBottomWidth: 4, borderBottomRightRadius: 25 },
   bottomBar: { flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' },
-  captureButtonOuter: { width: 84, height: 84, borderRadius: 42, borderWidth: 5, borderColor: '#4ADE80', justifyContent: 'center', alignItems: 'center' },
-  captureButtonInner: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#4ADE80' },
+  captureButtonOuter: { width: 84, height: 84, borderRadius: 42, borderWidth: 5, borderColor: '#47e426', justifyContent: 'center', alignItems: 'center' },
+  captureButtonInner: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#47e426' },
   sideButton: { width: 60, height: 60, justifyContent: 'center', alignItems: 'center' },
 
   modalOverlay: {
