@@ -18,6 +18,22 @@ import { CustomInput, PrimaryButton } from '../components/central.js';
 export default function Login({ navigation }) {
   const insets = useSafeAreaInsets();
 
+  const isAdmin = true; 
+
+  const handleLogin = () => {
+    if (isAdmin) { 
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'AdminMain' }],
+      });
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
+    }
+  };
+
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -60,7 +76,7 @@ export default function Login({ navigation }) {
 
             <PrimaryButton 
               title="Entrar" 
-              onPress={() => navigation.navigate("Home")} 
+              onPress={handleLogin} 
               borderRadius={12}
               style={{ marginTop: 6 }}
             />

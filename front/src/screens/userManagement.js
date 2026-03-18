@@ -4,12 +4,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
-  Search, Trash2, Home, Users, Leaf, User as UserIcon, Mail, Lock, EyeOff, X, Eye 
+  Search, Trash2, Home, Users, Leaf, User as UserIcon, Mail, Lock, EyeOff, X, Eye, 
+  Navigation
 } from 'lucide-react-native';
 
 const ACTIVE_GREEN = '#47e426';
 
-export default function UserManagementScreen() {
+export default function UserManagementScreen({navigation}) {
   // --- ESTADOS ---
   const [registerVisible, setRegisterVisible] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ visible: false, type: '', userId: null });
@@ -120,7 +121,8 @@ export default function UserManagementScreen() {
               >
                 <Text style={styles.btnText}>{user.status === 'Active' ? 'Desactivar' : 'Activar'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.visualizeBtn}><Text style={styles.btnTextGreen}>Visualizar</Text></TouchableOpacity>
+              <TouchableOpacity style={styles.visualizeBtn}><Text style={styles.btnTextGreen}
+              onPress={() => navigation.navigate('UserDetails')}>Visualizar</Text></TouchableOpacity>
               <TouchableOpacity style={styles.deleteBtn} onPress={() => handleAction('deletar', user.id)}><Trash2 color="#FFF" size={18} /></TouchableOpacity>
             </View>
           </View>

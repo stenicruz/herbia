@@ -9,8 +9,11 @@ import { BottomTabBar } from '../components/central.js';
 // Telas
 import AccessMode from '../screens/AccessMode';
 import AdminHome from '../screens/AdminHome.js'
+import AdminTips from '../screens/AdminTips.js';
+import AllAnalyses from '../screens/AllAnalyses.js'
 import CameraScanner from '../screens/CameraScanner.js';
 import ConfirmPhoto from '../screens/ConfirmPhoto.js';
+import Culture from '../screens/Culture.js';
 import DiagnosticSupport from '../screens/DiagnosticSupport.js';
 import DiagnosticResult from '../screens/DiagnosticResult.js';
 import EditProfile from '../screens/EditProfile.js';
@@ -49,6 +52,21 @@ function MainTabs() {
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="History" component={History} />
       <Tab.Screen name="Profile" component={Profile} />
+    </Tab.Navigator>
+  );
+};
+
+// Definição das Abas do Admin
+function AdminTabs() {
+  return (
+    <Tab.Navigator 
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <BottomTabBar {...props} />} 
+    >
+      <Tab.Screen name="AdminHome" component={AdminHome} /> 
+      <Tab.Screen name="UserManagement" component={UserManagement} />
+      <Tab.Screen name="Culture" component={Culture} />
+      <Tab.Screen name="Profile" component={Profile} /> 
     </Tab.Navigator>
   );
 }
@@ -106,6 +124,7 @@ export default function Routes() {
             }}
           />
           <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen name="AdminMain" component={AdminTabs} />
           <Stack.Screen name="ShowCulture" component={ShowCulture} />
           <Stack.Screen name="DiagnosticResult" component={DiagnosticResult} />
           <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
@@ -117,6 +136,11 @@ export default function Routes() {
           <Stack.Screen name="ConfirmPhoto" component={ConfirmPhoto} />
           <Stack.Screen name="Support" component={Support} />
           <Stack.Screen name="EditProfile" component={EditProfile} />
+          <Stack.Screen name="PhotoSupport" component={PhotoSupport} />
+          <Stack.Screen name="DiagnosticSupport" component={DiagnosticSupport} />
+          <Stack.Screen name="AllAnalyses" component={AllAnalyses} />
+          <Stack.Screen name="UserDetails" component={UserDetails} />
+          <Stack.Screen name="AdminTips" component={AdminTips} />
         </Stack.Group>
       )}
     </Stack.Navigator>

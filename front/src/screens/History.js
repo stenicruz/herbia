@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback, Image 
+  StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback, Image, Platform
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
-  ChevronDown, Trash2, Home, History as HistoryIcon, Camera, User, Check 
+  ChevronDown, Trash2, Check, Calendar as CalendarIcon
 } from 'lucide-react-native';
 
 import { AppHeader, BottomTabBar, ConfirmationModal } from '../components/central.js';
@@ -25,16 +26,56 @@ export default function HistoryScreen({ navigation }) {
   const [filtroStatus, setFiltroStatus] = useState('Todos');
   const [filtroData, setFiltroData] = useState(null);
 
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dataSelecionadaFormatada, setDataSelecionadaFormatada] = useState(null);
+
+  // Função para formatar data (DD/MM/YYYY)
+  const formatDate = (date) => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const onChangeDate = (event, selectedDate) => {
+    // IMPORTANTE: Fechar o picker imediatamente após a interação (Android)
+    // No iOS ele é persistente, então tratamos de forma diferente
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+
+    if (event.type === 'set') { // Usuário clicou em "OK"
+      const currentDate = selectedDate || date;
+      setDate(currentDate);
+      setDataSelecionadaFormatada(formatDate(currentDate));
+    } else if (event.type === 'dismissed') { // Usuário clicou fora ou em "Cancelar"
+      setShowDatePicker(false);
+    }
+  };
+
+  const abrirCalendario = () => {
+    setMenuAberto(null); // Fecha outros dropdowns para não bugar
+    setShowDatePicker(true);
+  };
+
+  const limparFiltroData = () => {
+    setDataSelecionadaFormatada(null);
+    setShowDatePicker(false);
+  };
+
   // Controle de visibilidade dos Dropdowns
   const [menuAberto, setMenuAberto] = useState(null); // 'planta', 'status', 'data' ou null
 
   const opcoesPlanta = ['Todas', 'Tomateiro', 'Arroz', 'Mandioca', 'Milho', 'Batata'];
   const opcoesStatus = ['Todos', 'Saudável', 'Doente', 'Desconhecido'];
 
+  // AJUSTE NA LÓGICA DE FILTRAGEM
   const dadosFiltrados = HISTORICO_DATA.filter(item => {
     const matchPlanta = filtroPlanta === 'Todas' || item.planta === filtroPlanta;
     const matchStatus = filtroStatus === 'Todos' || item.status === filtroStatus;
-    const matchData = !filtroData || item.data === filtroData;
+    // Usar a variável correta aqui: dataSelecionadaFormatada
+    const matchData = !dataSelecionadaFormatada || item.data === dataSelecionadaFormatada;
     return matchPlanta && matchStatus && matchData;
   });
 
@@ -73,15 +114,21 @@ export default function HistoryScreen({ navigation }) {
 
       {/* Barra de Filtros */}
       <View style={styles.filterRow}>
-        {/* DATA */}
+        {/* BOTÃO DE DATA ATUALIZADO */}
         <TouchableOpacity 
-          style={[styles.filterButton, filtroData && styles.filterButtonAtivo]} 
-          onPress={() => setFiltroData(filtroData ? null : '05/07/2025')} // Simula toggle de data
+          style={[styles.filterButton, dataSelecionadaFormatada && styles.filterButtonAtivo]} 
+          onPress={abrirCalendario} // Usa a nova função
         >
-          <Text style={[styles.filterText, filtroData && styles.filterTextAtivo]}>
-            {filtroData || "Data"}
+          <CalendarIcon color={dataSelecionadaFormatada ? "#FFF" : "#999"} size={16} style={{marginRight: 5}} />
+          <Text style={[styles.filterText, dataSelecionadaFormatada && styles.filterTextAtivo]}>
+            {dataSelecionadaFormatada || "Data"}
           </Text>
-          <ChevronDown color={filtroData ? "#FFF" : "#999"} size={18} />
+          {dataSelecionadaFormatada && (
+            <TouchableOpacity onPress={limparFiltroData} style={{marginLeft: 5}}>
+               {/* Use um ícone de X aqui ou texto */}
+               <Text style={{color: '#FFF', fontWeight: 'bold'}}>✕</Text>
+            </TouchableOpacity>
+          )}
         </TouchableOpacity>
 
         {/* PLANTA */}
@@ -106,6 +153,17 @@ export default function HistoryScreen({ navigation }) {
           <ChevronDown color={filtroStatus !== 'Todos' ? "#FFF" : "#999"} size={18} />
         </TouchableOpacity>
       </View>
+
+      {/* Componente Nativo do Calendário */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onChangeDate}
+          maximumDate={new Date()}
+        />
+      )}
 
       {/* Menus Suspensos (Modais) */}
       <RenderDropdown 

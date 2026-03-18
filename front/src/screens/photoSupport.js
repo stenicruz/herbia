@@ -12,18 +12,17 @@ import {
   ChevronLeft
 } from 'lucide-react-native';
 
+import { AppHeader } from '../components/AppHeader';
+
 export default function PhotoGuideScreen({ navigation }) {
   const activeColor = '#47e426';
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top']}>
       {/* Header com seta de voltar */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#666" size={28} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Guia de Fotografia</Text>
-      </View>
+      <AppHeader
+      title={"Guia de Fotografia"} />
+      
 
       <ScrollView 
         showsVerticalScrollIndicator={false} 
@@ -98,20 +97,6 @@ export default function PhotoGuideScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safeContainer: { flex: 1, backgroundColor: '#FFF' },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 20, 
-    paddingTop: 30,
-    paddingBottom: 20 
-  },
-  backBtn: { padding: 5 },
-  headerTitle: { 
-    fontSize: 20, 
-    fontWeight: '700', 
-    color: '#1B1919', 
-    marginLeft: 15 
-  },
   scrollContent: { paddingHorizontal: 25, paddingBottom: 30 },
 
   // Estilização do Banner
@@ -120,7 +105,8 @@ const styles = StyleSheet.create({
     height: 230, 
     borderRadius: 24, 
     overflow: 'hidden', 
-    marginBottom: 30 
+    marginBottom: 30,
+    marginTop: 10 
   },
   bannerImage: { width: '100%', height: '100%' },
   bannerOverlay: { 

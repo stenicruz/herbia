@@ -1,40 +1,41 @@
 import React from 'react';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, Platform 
+  StyleSheet, View, Text, TouchableOpacity, ScrollView, Platform, Linking
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
-  ChevronRight, 
-  ChevronLeft,
+  ChevronRight,
   Camera, 
   Share2, 
   Mail, 
   Home, 
   History, 
-  User,
-  Info
+  User
 } from 'lucide-react-native';
+
+
+import { AppHeader } from '../components/central';
 
 export default function SupportScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const activeColor = '#47e426';
 
+  // Função para abrir o email nativo
+  const handleEmailSupport = () => {
+    Linking.openURL('mailto:suporte@herbia.com?subject=Ajuda com o App');
+  };
+
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top']}>
       {/* Header com Voltar */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#1B1919" size={28} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ajuda e Suporte</Text>
-      </View>
+      <AppHeader title="Ajuda e Suporte" onBack={() => navigation.goBack()} />
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 25, paddingBottom: 140 }}
+        contentContainerStyle={{ paddingHorizontal: 25, paddingBottom: 80 }}
       >
         {/* Cards de Dúvidas Frequentes */}
-        <TouchableOpacity style={styles.supportCard}>
+        <TouchableOpacity style={styles.supportCard} onPress={() => navigation.navigate('PhotoSupport')}>
           <View style={styles.iconCircle}>
             <Camera color={activeColor} size={24} />
           </View>
@@ -45,7 +46,7 @@ export default function SupportScreen({ navigation }) {
           <ChevronRight color="#666" size={20} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.supportCard}>
+        <TouchableOpacity style={styles.supportCard} onPress={() => navigation.navigate('DiagnosticSupport')}>
           <View style={[styles.iconCircle, { backgroundColor: '#E8F9E4' }]}>
             <Share2 color={activeColor} size={24} />
           </View>
@@ -59,22 +60,26 @@ export default function SupportScreen({ navigation }) {
         {/* Seção Fale Conosco */}
         <Text style={styles.sectionLabel}>Fale Conosco</Text>
         
-        <View style={styles.emailContainer}>
+        <TouchableOpacity 
+          style={styles.emailContainer} 
+          onPress={handleEmailSupport}
+          activeOpacity={0.7}
+        >
           <View style={styles.emailIconBox}>
             <Mail color="#FFF" size={32} />
           </View>
           <Text style={styles.emailTitle}>Enviar Email</Text>
           <Text style={styles.emailSub}>Respondemos em até 24 horas úteis</Text>
-        </View>
+        </TouchableOpacity>
 
         {/* Links de Documentos */}
         <View style={styles.linksContainer}>
-          <TouchableOpacity style={styles.linkRow}>
+          <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('TermsOfUse')}>
             <Text style={styles.linkText}>Termos de uso</Text>
             <ChevronRight color="#1B1919" size={20} />
           </TouchableOpacity>
           <View style={styles.divider} />
-          <TouchableOpacity style={styles.linkRow}>
+          <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('PrivacyPolicy', { isLogged: true })}>
             <Text style={styles.linkText}>Política de Privacidade</Text>
             <ChevronRight color="#1B1919" size={20} />
           </TouchableOpacity>
@@ -84,44 +89,13 @@ export default function SupportScreen({ navigation }) {
       </ScrollView>
 
       {/* MENU INFERIOR (Ativo em Perfil ou neutro, conforme sua navegação) */}
-      <View style={[
-        styles.tabBar, 
-        { paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom + 15 }
-      ]}>
-        <TouchableOpacity style={styles.tabItem}>
-          <Home color="#999" size={26} />
-          <Text style={styles.tabLabel}>Casa</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <History color="#999" size={26} />
-          <Text style={styles.tabLabel}>Histórico</Text>
-        </TouchableOpacity>
-        <View style={styles.cameraTabWrapper}>
-          <TouchableOpacity style={styles.cameraTabBtn}>
-            <Camera color="#47e426" size={47} fill="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.tabLabel}>Câmera</Text>
-        </View>
-        <TouchableOpacity style={styles.tabItem}>
-          <User color="#999" size={26} />
-          <Text style={styles.tabLabel}>Perfil</Text>
-        </TouchableOpacity>
-      </View>
+      
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeContainer: { flex: 1, backgroundColor: '#FFF' },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 18, 
-    paddingVertical: 30 
-  },
-  backBtn: { marginRight: 15 },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#1B1919' },
-
   supportCard: { 
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -130,7 +104,8 @@ const styles = StyleSheet.create({
     borderColor: '#E8F9E4', 
     borderRadius: 20, 
     padding: 15, 
-    marginBottom: 15 
+    marginBottom: 15,
+    marginTop: 15
   },
   iconCircle: { 
     width: 50, 
@@ -192,15 +167,9 @@ const styles = StyleSheet.create({
   versionText: { 
     textAlign: 'center', 
     color: '#BBB', 
-    marginVertical: 35, 
+    marginTop: 35, 
     fontSize: 14, 
     fontWeight: '500' 
   },
 
-  // TabBar
-  tabBar: { flexDirection: 'row', backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F2F2F2', alignItems: 'center', justifyContent: 'space-around', position: 'absolute', bottom: 0, width: '100%', paddingTop: 12 },
-  tabItem: { alignItems: 'center' },
-  tabLabel: { fontSize: 12, marginTop: 4, fontWeight: '600', color: '#999'},
-  cameraTabWrapper: { alignItems: 'center', marginTop: -40 },
-  cameraTabBtn: { backgroundColor: '#47e426', width: 68, height: 68, borderRadius: 34, justifyContent: 'center', alignItems: 'center', borderWidth: 6, borderColor: '#a5ef95', elevation: 8 }
-});
+ });

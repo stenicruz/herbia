@@ -10,18 +10,16 @@ import {
   HelpCircle 
 } from 'lucide-react-native';
 
+import { AppHeader } from '../components/AppHeader';
+
 export default function DiagnosisGuideScreen({ navigation }) {
   const activeColor = '#47e426';
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top']}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation?.goBack()} style={styles.backBtn}>
-          <ChevronLeft color="#1B1919" size={28} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Guia de Diagnóstico</Text>
-      </View>
+      <AppHeader
+      title={"Guia de Diagnósticos"} />
 
       <ScrollView 
         showsVerticalScrollIndicator={false} 
@@ -85,20 +83,6 @@ export default function DiagnosisGuideScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safeContainer: { flex: 1, backgroundColor: '#FFF' },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 20, 
-    paddingTop: 25,
-    paddingBottom: 25 
-  },
-  backBtn: { padding: 5 },
-  headerTitle: { 
-    fontSize: 20, 
-    fontWeight: '700', 
-    color: '#1B1919', 
-    marginLeft: 15 
-  },
   scrollContent: { paddingHorizontal: 25, paddingBottom: 30 },
 
   // Banner
@@ -107,7 +91,8 @@ const styles = StyleSheet.create({
     height: 200, 
     borderRadius: 20, 
     overflow: 'hidden', 
-    marginBottom: 20 
+    marginBottom: 20,
+    marginTop: 20
   },
   bannerImage: { width: '100%', height: '100%' },
   bannerOverlay: { 

@@ -56,7 +56,7 @@ export const PrimaryButton = ({
           {Icon && (
             <Icon 
               size={iconSize} 
-              color={variant === 'primary' ? '#FFF' : '#47e426'} 
+              color={variant === 'primary' ? '#FFF' : '#47e426' || 'danger' ? '#d40b0b' : '#47e426'} 
               strokeWidth={iconStrokeWidth}
             />
           )}

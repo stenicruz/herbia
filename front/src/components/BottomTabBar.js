@@ -1,21 +1,27 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, History, Camera, User } from 'lucide-react-native'; 
+import { Home, History, Camera, User, LayoutDashboard, Users, Leaf } from 'lucide-react-native'; 
 
 export const BottomTabBar = ({ state, navigation }) => {
   const insets = useSafeAreaInsets();
   const activeColor = '#47e426';
   const inactiveColor = '#999';
 
-  // Configuração das abas que REALMENTE estão no TabNavigator
+  // Configuração estendida para suportar Admin e Usuário
   const screenConfigs = {
+    // Usuário
     Home: { label: 'Casa', icon: Home },
     History: { label: 'Histórico', icon: History },
     Profile: { label: 'Perfil', icon: User },
+    // Admin
+    AdminHome: { label: 'Painel', icon: LayoutDashboard },
+    UserManagement: { label: 'Usuários', icon: Users },
+    Culture: {label: 'Culturas', icon: Leaf},
   };
 
   const tabs = state.routes; // Home, History, Profile
+  const isAdminFlow = tabs[0].name === 'AdminHome';
 
   return (
     <View style={[
@@ -23,45 +29,60 @@ export const BottomTabBar = ({ state, navigation }) => {
       { paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom + 15 }
     ]}>
       
-      {/* 1. Renderiza as duas primeiras abas (Home e History) */}
-      {tabs.slice(0, 2).map((route, index) => {
-        const isFocused = state.index === index;
-        const config = screenConfigs[route.name];
-        const Icon = config.icon;
+      {!isAdminFlow ? (
+        /* --- LAYOUT USUÁRIO (Câmera flutuante no meio) --- */
+        <>
+          {tabs.slice(0, 2).map((route, index) => {
+            const isFocused = state.index === index;
+            const config = screenConfigs[route.name] || { label: route.name, icon: Home };
+            const Icon = config.icon;
+            return (
+              <TouchableOpacity key={route.key} style={styles.tabItem} onPress={() => navigation.navigate(route.name)}>
+                <Icon color={isFocused ? activeColor : inactiveColor} size={26} fill={isFocused && route.name !== 'History' ? activeColor : 'none'} />
+                <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>{config.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
 
-        return (
-          <TouchableOpacity key={route.key} style={styles.tabItem} onPress={() => navigation.navigate(route.name)}>
-            <Icon color={isFocused ? activeColor : inactiveColor} size={26} fill={isFocused && route.name !== 'History' ? activeColor : 'none'} />
-            <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>{config.label}</Text>
-          </TouchableOpacity>
-        );
-      })}
+          <View style={styles.cameraTabWrapper}>
+            <TouchableOpacity style={styles.cameraTabBtn} onPress={() => navigation.navigate('CameraScanner')} activeOpacity={0.8}>
+              <Camera color="#fff" size={32} />
+            </TouchableOpacity>
+            <Text style={[styles.tabLabel, { color: inactiveColor }]}>Câmera</Text>
+          </View>
 
-      {/* 2. BOTÃO DA CÂMERA (Manual e fixo no meio) */}
-      <View style={styles.cameraTabWrapper}>
-        <TouchableOpacity 
-          style={styles.cameraTabBtn}
-          onPress={() => navigation.navigate('CameraScanner')} // Navega para o Stack
-          activeOpacity={0.8}
-        >
-          <Camera color="#47e426" size={47} fill="#fff" />
-        </TouchableOpacity>
-        <Text style={[styles.tabLabel, { color: inactiveColor }]}>Câmera</Text>
-      </View>
-
-      {/* 3. Renderiza a última aba (Profile) */}
-      {tabs.slice(2).map((route, index) => {
-        const isFocused = state.index === index + 2; // +2 porque pulamos as duas primeiras
-        const config = screenConfigs[route.name];
-        const Icon = config.icon;
-
-        return (
-          <TouchableOpacity key={route.key} style={styles.tabItem} onPress={() => navigation.navigate(route.name)}>
-            <Icon color={isFocused ? activeColor : inactiveColor} size={26} fill={isFocused ? activeColor : 'none'} />
-            <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>{config.label}</Text>
-          </TouchableOpacity>
-        );
-      })}
+          {tabs.slice(2).map((route, index) => {
+            const isFocused = state.index === index + 2;
+            const config = screenConfigs[route.name] || { label: route.name, icon: User };
+            const Icon = config.icon;
+            return (
+              <TouchableOpacity key={route.key} style={styles.tabItem} onPress={() => navigation.navigate(route.name)}>
+                <Icon color={isFocused ? activeColor : inactiveColor} size={26} fill={isFocused ? activeColor : 'none'} />
+                <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>{config.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </>
+      ) : (
+        /* --- LAYOUT ADMIN (4 Abas Lineares) --- */
+        tabs.map((route, index) => {
+          const isFocused = state.index === index;
+          const config = screenConfigs[route.name] || { label: route.name, icon: User };
+          const Icon = config.icon;
+          return (
+            <TouchableOpacity key={route.key} style={styles.tabItem} onPress={() => navigation.navigate(route.name)}>
+              <Icon 
+                color={isFocused ? activeColor : inactiveColor} 
+                size={24} 
+                fill={isFocused ? activeColor : 'none'} 
+              />
+              <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>
+                {config.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })
+      )}
     </View>
   );
 };

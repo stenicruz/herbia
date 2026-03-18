@@ -30,7 +30,16 @@ export default function ConfirmPhoto({ route, navigation }) {
         setShowErrorModal(true);
       } else {
         // Sucesso: Segue para a tela de resultados
-        navigation.navigate('DiagnosticResult', { imageUri, confidence: mockConfidence });
+        
+        navigation.reset({
+        index: 0,
+        routes: [
+          { 
+            name: 'DiagnosticResult', 
+            params: { imageUri, confidence: mockConfidence } 
+          },
+        ],
+      });
       }
     } catch (error) {
       console.error(error);
