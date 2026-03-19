@@ -5,13 +5,14 @@ import {
   Text, 
   TouchableOpacity, 
   ScrollView, 
-  Image 
+  Image,
+  StatusBar
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AppHeader } from '../components/AppHeader';
-
-import { ChevronLeft } from 'lucide-react-native';
+import { THEME } from '../styles/Theme';
+import { useTheme } from '../context/ThemeContext';
+import { AppHeader } from '../components/central.js'; // Ajustado para o seu padrão
 
 const culturas = [
     { id: 1, nome: 'Tomate', img: require('../../assets/tomate.jpeg') },
@@ -22,84 +23,82 @@ const culturas = [
 
 export default function CulturesScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: currentTheme.background }]} edges={['top']}>
+      <StatusBar 
+        barStyle={isDarkMode ? "light-content" : "dark-content"} 
+        backgroundColor={currentTheme.background} 
+      />
       
-      {/* Header */}
-      <AppHeader
-      title={'Culturas Suportadas'}
-       />
+      <AppHeader title={'Culturas Suportadas'} onBack={() => navigation.goBack()} />
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+        bounces={false}
       >
         <View style={styles.textSection}>
-          <Text style={styles.descriptionText}>
-            Abaixo são apresentatas todas as culturas suportadas pelo sistema.
+          <Text style={[styles.descriptionText, { color: currentTheme.textSecondary }]}>
+            Abaixo são apresentadas todas as culturas suportadas pelo sistema de diagnóstico Herbia.
           </Text>
         </View>
 
-        {/* Grid Container */}
-        <View style={styles.grid}>
-        {culturas.map((item) => ( // Corrigido para minúsculo
-          <TouchableOpacity key={item.id} style={styles.cultureItem} activeOpacity={0.7}>
-            <View style={styles.circle}>
-              <Image 
-                source={item.img} 
-                style={styles.cultureImage} 
-                resizeMode="cover" 
-              />
-            </View>
-            <Text style={styles.cultureName}>{item.nome}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        {/* Grid Wrapper com fundo dinâmico */}
+        <View style={[
+          styles.gridWrapper, 
+          { backgroundColor: isDarkMode ? '#0c0e0b' : '#f7faf6' }
+        ]}>
+          <View style={styles.grid}>
+            {culturas.map((item) => (
+              <TouchableOpacity key={item.id} style={styles.cultureItem} activeOpacity={0.7}>
+                <View style={[
+                  styles.circle, 
+                  { 
+                    backgroundColor: isDarkMode ? '#1A1D19' : '#FFF',
+                    borderColor: isDarkMode ? '#333' : '#FFF',
+                    elevation: isDarkMode ? 0 : 3
+                  }
+                ]}>
+                  <Image 
+                    source={item.img} 
+                    style={[styles.cultureImage, isDarkMode && { opacity: 0.85 }]} 
+                    resizeMode="cover" 
+                  />
+                </View>
+                <Text style={[styles.cultureName, { color: currentTheme.textPrimary }]}>
+                  {item.nome}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: { 
-    flex: 1, 
-    backgroundColor: '#FFF' 
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15, // Ajustado para o Chevron não ficar muito longe da borda
-    paddingTop: 25,
-    paddingBottom: 15,
-  },
-  backButton: {
-    marginRight: 10,
-    padding: 7, // Aumenta a área de clique para melhor UX
-  },
-  headerTitle: {
-    fontSize: 21,
-    fontWeight: '700',
-    color: '#1B1919',
-  },
+  safeContainer: { flex: 1 },
+  
   textSection: {
-    paddingHorizontal: 25,
-    marginTop: 10,
-    marginBottom: 30,
+    paddingHorizontal: 20,
+    marginTop: 15,
+    marginBottom: 25,
   },
   descriptionText: {
     fontSize: 16,
-    color: '#666',
-    lineHeight: 23,
+    lineHeight: 24,
   },
   gridWrapper: {
     flex: 1,
-    backgroundColor: '#f0f7ee96', 
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
-    paddingTop: 45,
+    paddingTop: 40,
     paddingHorizontal: 15,
-    minHeight: '100%',
+    minHeight: 600,
   },
   grid: {
     flexDirection: 'row',
@@ -109,41 +108,30 @@ const styles = StyleSheet.create({
   cultureItem: {
     width: '33.3%',
     alignItems: 'center',
-    marginBottom: 35,
+    marginBottom: 30,
   },
   circle: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
-    backgroundColor: '#F9F9F9', // Fundo claro para destacar a planta
-    marginBottom: 10,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    overflow: 'hidden', // Corta a imagem no formato do círculo
+    width: 85,
+    height: 85,
+    borderRadius: 43,
+    marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#FFF',
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
+    // Sombra para iOS
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
   },
   cultureImage: {
     width: '100%',
     height: '100%',
   },
-  gridWrapper: {
-    flex: 1,
-    backgroundColor: '#f7faf6', // Um tom de verde quase branco, muito elegante
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    paddingTop: 35,
-    paddingHorizontal: 10,
-    minHeight: 600, // Garante que o fundo colorido cubra a tela
-  },
   cultureName: {
     fontSize: 14,
-    color: '#1B1919',
-    fontWeight: '700', // Um pouco mais de peso para facilitar a leitura
+    fontWeight: '700',
     textAlign: 'center',
   },
 });

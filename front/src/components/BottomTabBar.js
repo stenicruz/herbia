@@ -3,30 +3,37 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, History, Camera, User, LayoutDashboard, Users, Leaf } from 'lucide-react-native'; 
 
+import { THEME } from '../styles/Theme';
+import { useTheme } from '../context/ThemeContext';
+
 export const BottomTabBar = ({ state, navigation }) => {
   const insets = useSafeAreaInsets();
-  const activeColor = '#47e426';
-  const inactiveColor = '#999';
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
-  // Configuração estendida para suportar Admin e Usuário
+  const activeColor = THEME.primary;
+  const inactiveColor = isDarkMode ? '#969494' : '#999';
+
   const screenConfigs = {
-    // Usuário
     Home: { label: 'Casa', icon: Home },
     History: { label: 'Histórico', icon: History },
     Profile: { label: 'Perfil', icon: User },
-    // Admin
     AdminHome: { label: 'Painel', icon: LayoutDashboard },
     UserManagement: { label: 'Usuários', icon: Users },
-    Culture: {label: 'Culturas', icon: Leaf},
+    Culture: { label: 'Culturas', icon: Leaf },
   };
 
-  const tabs = state.routes; // Home, History, Profile
-  const isAdminFlow = tabs[0].name === 'AdminHome';
+  const tabs = state.routes;
+  const isAdminFlow = tabs[0]?.name === 'AdminHome';
 
   return (
     <View style={[
       styles.tabBar, 
-      { paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom + 15 }
+      { 
+        backgroundColor: currentTheme.background,
+        borderTopColor: isDarkMode ? '#121411' : '#F2F2F2',
+        paddingBottom: Platform.OS === 'android' ? insets.bottom + 10 : insets.bottom + 16 
+      }
     ]}>
       
       {!isAdminFlow ? (
@@ -38,15 +45,31 @@ export const BottomTabBar = ({ state, navigation }) => {
             const Icon = config.icon;
             return (
               <TouchableOpacity key={route.key} style={styles.tabItem} onPress={() => navigation.navigate(route.name)}>
-                <Icon color={isFocused ? activeColor : inactiveColor} size={26} fill={isFocused && route.name !== 'History' ? activeColor : 'none'} />
-                <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>{config.label}</Text>
+                <Icon 
+                  color={isFocused ? activeColor : inactiveColor} 
+                  size={26} 
+                  fill={isFocused && route.name !== 'History' ? activeColor : 'none'} 
+                />
+                <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>
+                  {config.label}
+                </Text>
               </TouchableOpacity>
             );
           })}
 
           <View style={styles.cameraTabWrapper}>
-            <TouchableOpacity style={styles.cameraTabBtn} onPress={() => navigation.navigate('CameraScanner')} activeOpacity={0.8}>
-              <Camera color="#fff" size={32} />
+            <TouchableOpacity 
+              style={[
+                styles.cameraTabBtn, 
+                { 
+                  borderColor: isDarkMode ? '#1c201a' : '#a5ef95',
+                  elevation: isDarkMode ? 12 : 8
+                }
+              ]} 
+              onPress={() => navigation.navigate('CameraScanner')} 
+              activeOpacity={0.8}
+            >
+              <Camera color={activeColor} size={45} fill={isDarkMode ? "#121411" : "#fff"}/>
             </TouchableOpacity>
             <Text style={[styles.tabLabel, { color: inactiveColor }]}>Câmera</Text>
           </View>
@@ -57,14 +80,20 @@ export const BottomTabBar = ({ state, navigation }) => {
             const Icon = config.icon;
             return (
               <TouchableOpacity key={route.key} style={styles.tabItem} onPress={() => navigation.navigate(route.name)}>
-                <Icon color={isFocused ? activeColor : inactiveColor} size={26} fill={isFocused ? activeColor : 'none'} />
-                <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>{config.label}</Text>
+                <Icon 
+                  color={isFocused ? activeColor : inactiveColor} 
+                  size={26} 
+                  fill={isFocused ? activeColor : 'none'} 
+                />
+                <Text style={[styles.tabLabel, { color: isFocused ? activeColor : inactiveColor }]}>
+                  {config.label}
+                </Text>
               </TouchableOpacity>
             );
           })}
         </>
       ) : (
-        /* --- LAYOUT ADMIN (4 Abas Lineares) --- */
+        /* --- LAYOUT ADMIN (Abas Lineares) --- */
         tabs.map((route, index) => {
           const isFocused = state.index === index;
           const config = screenConfigs[route.name] || { label: route.name, icon: User };
@@ -90,48 +119,42 @@ export const BottomTabBar = ({ state, navigation }) => {
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#FFF',
     borderTopWidth: 1,
-    borderTopColor: '#F2F2F2',
     alignItems: 'center',
     justifyContent: 'space-around',
     position: 'absolute',
     bottom: 0,
     width: '100%',
     paddingTop: 12,
+    // Sombra leve para o modo claro
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
   },
-  
-tabItem: { 
+  tabItem: { 
     alignItems: 'center', 
     justifyContent: 'center',
-    flex: 1 // Faz com que todos os itens ocupem o mesmo espaço horizontal
+    flex: 1 
   },
-  
   tabLabel: { 
-    fontSize: 12,      // Tamanho igual para todos
-    marginTop: 4,      // Distância igual do ícone/botão
-    fontWeight: '600', // Peso igual para todos
+    fontSize: 11,
+    marginTop: 5,
+    fontWeight: '700',
     textAlign: 'center'
   },
-  
   cameraTabWrapper: { 
     alignItems: 'center', 
-    marginTop: -38,   // Ajuste fino para o botão flutuar
-    flex: 1           // Garante que o texto da câmera alinhe horizontalmente com os outros
+    marginTop: -42,
+    flex: 1 
   },
   cameraTabBtn: {
     backgroundColor: '#47e426',
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 6,
-    borderColor: '#a5ef95',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    marginBottom: 2, // Pequeno ajuste para o texto não colar no botão verde
+    borderWidth: 5,
+    marginBottom: 2,
   }
 });

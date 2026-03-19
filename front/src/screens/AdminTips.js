@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { 
   StyleSheet, View, Text, TouchableOpacity, ScrollView, 
-  TextInput, Modal, Alert, KeyboardAvoidingView, Platform 
+  TextInput, Modal, Alert, KeyboardAvoidingView, Platform, StatusBar 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
   Plus, Trash2, Send, X 
 } from 'lucide-react-native';
 
-// Importando seus componentes
+import { THEME } from '../styles/Theme';
+import { useTheme } from '../context/ThemeContext';
 import { AppHeader, ConfirmationModal } from '../components/central.js';
 
-const ACTIVE_GREEN = '#47e426';
-
 export default function AdminTipsScreen({ navigation }) {
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
+  const ACTIVE_GREEN = THEME.primary;
+
   const [tips, setTips] = useState([
     { id: '1', title: 'Solo Ideal', content: 'Mantenha o solo úmido, mas nunca encharcado para evitar fungos nas raízes.' },
     { id: '2', title: 'Luz Solar', content: 'O tomateiro precisa de pelo menos 6 horas de sol direto por dia.' },
@@ -48,19 +51,19 @@ export default function AdminTipsScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]} edges={['top']}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       <AppHeader title="Gerenciar Dicas" showBack={true} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>
+        <View style={[styles.infoBox, { backgroundColor: isDarkMode ? '#121411' : '#F9F9F9', borderColor: isDarkMode ? '#1A2E1A' : '#EEE' }]}>
+          <Text style={[styles.infoText, { color: isDarkMode ? '#AAA' : '#666' }]}>
             Estas dicas são exibidas na tela inicial dos Usuários para auxiliar no manejo das culturas.
           </Text>
         </View>
 
-        {/* Botão de Adicionar Retangular - Logo abaixo da infoBox */}
         <TouchableOpacity 
-          style={styles.addRectBtn} 
+          style={[styles.addRectBtn, { backgroundColor: ACTIVE_GREEN }]} 
           onPress={() => setModalVisible(true)}
           activeOpacity={0.8}
         >
@@ -69,17 +72,17 @@ export default function AdminTipsScreen({ navigation }) {
         </TouchableOpacity>
 
         {tips.map((item) => (
-          <View key={item.id} style={styles.tipCard}>
+          <View key={item.id} style={[styles.tipCard, { backgroundColor: isDarkMode ? '#121411' : '#FFF', borderColor: isDarkMode ? '#1A2E1A' : '#F2F2F2' }]}>
             <View style={styles.tipHeader}>
-              <Text style={styles.tipTitle}>{item.title}</Text>
+              <Text style={[styles.tipTitle, { color: currentTheme.textPrimary }]}>{item.title}</Text>
               <TouchableOpacity 
                 onPress={() => confirmDelete(item.id)}
                 style={styles.deleteBtn}
               >
-                <Trash2 color="#FF4444" size={20} />
+                <Trash2 color="#FF5252" size={20} />
               </TouchableOpacity>
             </View>
-            <Text style={styles.tipDescription}>{item.content}</Text>
+            <Text style={[styles.tipDescription, { color: isDarkMode ? '#BBB' : '#555' }]}>{item.content}</Text>
           </View>
         ))}
       </ScrollView>
@@ -90,32 +93,32 @@ export default function AdminTipsScreen({ navigation }) {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
           style={styles.modalOverlay}
         >
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: isDarkMode ? '#1A1D19' : '#FFF' }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nova Dica</Text>
+              <Text style={[styles.modalTitle, { color: currentTheme.textPrimary }]}>Nova Dica</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <X color="#666" size={24} />
+                <X color={isDarkMode ? "#AAA" : "#666"} size={24} />
               </TouchableOpacity>
             </View>
 
             <TextInput 
-              style={styles.input} 
+              style={[styles.input, { backgroundColor: isDarkMode ? '#121411' : '#F5F5F5', color: currentTheme.textPrimary }]} 
               placeholder="Título da Dica"
               value={newTitle}
               onChangeText={setNewTitle}
-              placeholderTextColor="#AAA"
+              placeholderTextColor={isDarkMode ? "#555" : "#AAA"}
             />
 
             <TextInput 
-              style={[styles.input, styles.textArea]} 
+              style={[styles.input, styles.textArea, { backgroundColor: isDarkMode ? '#121411' : '#F5F5F5', color: currentTheme.textPrimary }]} 
               placeholder="Descreva a dica detalhadamente..."
               value={newContent}
               onChangeText={setNewContent}
               multiline
-              placeholderTextColor="#AAA"
+              placeholderTextColor={isDarkMode ? "#555" : "#AAA"}
             />
 
-            <TouchableOpacity style={styles.publishBtn} onPress={handleAddTip}>
+            <TouchableOpacity style={[styles.publishBtn, { backgroundColor: ACTIVE_GREEN }]} onPress={handleAddTip}>
               <Send color="#FFF" size={20} />
               <Text style={styles.publishBtnText}>Publicar agora</Text>
             </TouchableOpacity>
@@ -126,65 +129,73 @@ export default function AdminTipsScreen({ navigation }) {
       <ConfirmationModal
         visible={deleteModalVisible}
         title="Eliminar Dica"
-        message="Deseja remover esta dica? Esta ação não pode ser desfeita."
+        description="Deseja remover esta dica? Esta ação não pode ser desfeita."
         onConfirm={handleDelete}
         onClose={() => setDeleteModalVisible(false)}
         confirmText="Eliminar"
+        variant="danger"
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFF' },
+  container: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 40 },
   
   infoBox: { 
-    backgroundColor: '#F9F9F9', 
-    padding: 15, 
-    borderRadius: 15, 
-    marginBottom: 10, // Menor para aproximar o botão
+    padding: 18, 
+    borderRadius: 20, 
+    marginBottom: 10, 
     borderWidth: 1, 
-    borderColor: '#EEE'
   },
-  infoText: { color: '#666', fontSize: 13, textAlign: 'center', lineHeight: 18 },
+  infoText: { fontSize: 13, textAlign: 'center', lineHeight: 20, fontWeight: '500' },
   
   addRectBtn: {
-    backgroundColor: ACTIVE_GREEN,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 15,
-    marginBottom: 25,
-    gap: 8,
-    elevation: 2,
-    shadowColor: ACTIVE_GREEN,
+    padding: 18,
+    borderRadius: 20,
+    marginBottom: 30,
+    gap: 10,
+    elevation: 4,
+    shadowColor: '#000',
     shadowOpacity: 0.2,
-    shadowRadius: 5
+    shadowRadius: 8
   },
-  addRectBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  addRectBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
 
   tipCard: { 
-    backgroundColor: '#FFF', borderRadius: 20, padding: 18, marginBottom: 15,
-    borderWidth: 1, borderColor: '#F2F2F2',
-    elevation: 1
+    borderRadius: 22, 
+    padding: 20, 
+    marginBottom: 16,
+    borderWidth: 1, 
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10
   },
-  tipHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  tipTitle: { fontSize: 17, fontWeight: '800', color: '#1B1919', flex: 1, marginRight: 10 },
-  deleteBtn: { padding: 4 },
-  tipDescription: { fontSize: 14, color: '#555', lineHeight: 22 },
+  tipHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  tipTitle: { fontSize: 18, fontWeight: '800', flex: 1, marginRight: 10 },
+  deleteBtn: { padding: 6 },
+  tipDescription: { fontSize: 14, lineHeight: 24, fontWeight: '500' },
 
   // Estilos Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, paddingBottom: 70 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
-  modalTitle: { fontSize: 22, fontWeight: '800', color: '#1B1919' },
-  input: { backgroundColor: '#F5F5F5', borderRadius: 15, padding: 18, fontSize: 16, color: '#333', marginBottom: 15 },
-  textArea: { height: 130, textAlignVertical: 'top' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modalContent: { borderTopLeftRadius: 35, borderTopRightRadius: 35, padding: 30, paddingBottom: 60 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 },
+  modalTitle: { fontSize: 24, fontWeight: '800' },
+  input: { borderRadius: 18, padding: 20, fontSize: 16, marginBottom: 18, fontWeight: '500' },
+  textArea: { height: 150, textAlignVertical: 'top' },
   publishBtn: { 
-    backgroundColor: ACTIVE_GREEN, borderRadius: 15, padding: 18, 
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10
+    borderRadius: 18, 
+    padding: 20, 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    gap: 12,
+    marginTop: 10
   },
-  publishBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' }
+  publishBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' }
 });

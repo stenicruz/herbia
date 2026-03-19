@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback, Image, Platform
+  StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback, Platform, StatusBar
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
-  ChevronDown, Trash2, Check, Calendar as CalendarIcon
+  ChevronDown, Trash2, Check, Calendar as CalendarIcon, X
 } from 'lucide-react-native';
 
-import { AppHeader, BottomTabBar, ConfirmationModal } from '../components/central.js';
+import { THEME } from '../styles/Theme';
+import { useTheme } from '../context/ThemeContext';
+import { AppHeader, ConfirmationModal } from '../components/central.js';
 
 const HISTORICO_DATA = [
   { id: '1', planta: 'Tomateiro', status: 'Saudável', data: '05/07/2025', corStatus: '#47e426' },
@@ -18,19 +20,21 @@ const HISTORICO_DATA = [
 ];
 
 export default function HistoryScreen({ navigation }) {
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-
-  // Estados dos Filtros
   const [filtroPlanta, setFiltroPlanta] = useState('Todas');
   const [filtroStatus, setFiltroStatus] = useState('Todos');
-  const [filtroData, setFiltroData] = useState(null);
-
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dataSelecionadaFormatada, setDataSelecionadaFormatada] = useState(null);
+  const [menuAberto, setMenuAberto] = useState(null);
 
-  // Função para formatar data (DD/MM/YYYY)
+  const opcoesPlanta = ['Todas', 'Tomateiro', 'Arroz', 'Mandioca', 'Milho', 'Batata'];
+  const opcoesStatus = ['Todos', 'Saudável', 'Doente', 'Desconhecido'];
+
   const formatDate = (date) => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -39,65 +43,48 @@ export default function HistoryScreen({ navigation }) {
   };
 
   const onChangeDate = (event, selectedDate) => {
-    // IMPORTANTE: Fechar o picker imediatamente após a interação (Android)
-    // No iOS ele é persistente, então tratamos de forma diferente
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-
-    if (event.type === 'set') { // Usuário clicou em "OK"
+    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (event.type === 'set') {
       const currentDate = selectedDate || date;
       setDate(currentDate);
       setDataSelecionadaFormatada(formatDate(currentDate));
-    } else if (event.type === 'dismissed') { // Usuário clicou fora ou em "Cancelar"
+    } else {
       setShowDatePicker(false);
     }
   };
 
-  const abrirCalendario = () => {
-    setMenuAberto(null); // Fecha outros dropdowns para não bugar
-    setShowDatePicker(true);
-  };
-
-  const limparFiltroData = () => {
-    setDataSelecionadaFormatada(null);
-    setShowDatePicker(false);
-  };
-
-  // Controle de visibilidade dos Dropdowns
-  const [menuAberto, setMenuAberto] = useState(null); // 'planta', 'status', 'data' ou null
-
-  const opcoesPlanta = ['Todas', 'Tomateiro', 'Arroz', 'Mandioca', 'Milho', 'Batata'];
-  const opcoesStatus = ['Todos', 'Saudável', 'Doente', 'Desconhecido'];
-
-  // AJUSTE NA LÓGICA DE FILTRAGEM
   const dadosFiltrados = HISTORICO_DATA.filter(item => {
     const matchPlanta = filtroPlanta === 'Todas' || item.planta === filtroPlanta;
     const matchStatus = filtroStatus === 'Todos' || item.status === filtroStatus;
-    // Usar a variável correta aqui: dataSelecionadaFormatada
     const matchData = !dataSelecionadaFormatada || item.data === dataSelecionadaFormatada;
     return matchPlanta && matchStatus && matchData;
   });
 
-  const handleDeletePress = (id) => {
-    setSelectedItem(id);
-    setModalVisible(true);
-  };
-
-  // Componente de Dropdown Flutuante
+  // Componente de Dropdown Flutuante Adaptado
   const RenderDropdown = ({ visivel, opcoes, selecionado, aoSelecionar, posicaoEsquerda }) => (
     <Modal visible={visivel} transparent animationType="fade">
       <TouchableWithoutFeedback onPress={() => setMenuAberto(null)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.dropdownContainer, { left: posicaoEsquerda }]}>
+          <View style={[
+            styles.dropdownContainer, 
+            { 
+              left: posicaoEsquerda, 
+              backgroundColor: isDarkMode ? '#1A1D19' : '#FFF',
+              borderColor: isDarkMode ? '#333' : '#F0F0F0'
+            }
+          ]}>
             {opcoes.map((opt) => (
               <TouchableOpacity 
                 key={opt} 
-                style={styles.dropdownOption} 
+                style={[styles.dropdownOption, { borderBottomColor: isDarkMode ? '#222' : '#F9F9F9' }]} 
                 onPress={() => { aoSelecionar(opt); setMenuAberto(null); }}
               >
-                {selecionado === opt && <Check color="#47e426" size={16} style={{marginRight: 8}} />}
-                <Text style={[styles.dropdownText, selecionado === opt && {color: '#47e426', fontWeight: '700'}]}>
+                {selecionado === opt && <Check color={THEME.primary} size={16} style={{marginRight: 8}} />}
+                <Text style={[
+                  styles.dropdownText, 
+                  { color: isDarkMode ? '#CCC' : '#666' },
+                  selecionado === opt && { color: THEME.primary, fontWeight: '700' }
+                ]}>
                   {opt}
                 </Text>
               </TouchableOpacity>
@@ -109,106 +96,100 @@ export default function HistoryScreen({ navigation }) {
   );
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['top']}>
-      <AppHeader title="Histórico" showBack={false} style={{ justifyContent: 'center' }} />
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: currentTheme.background }]} edges={['top']}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+      <AppHeader title="Histórico" showBack={false} />
 
       {/* Barra de Filtros */}
       <View style={styles.filterRow}>
-        {/* BOTÃO DE DATA ATUALIZADO */}
         <TouchableOpacity 
-          style={[styles.filterButton, dataSelecionadaFormatada && styles.filterButtonAtivo]} 
-          onPress={abrirCalendario} // Usa a nova função
+          style={[
+            styles.filterButton, 
+            { backgroundColor: isDarkMode ? '#121411' : '#FFF', borderColor: isDarkMode ? '#333' : '#EEE' },
+            dataSelecionadaFormatada && styles.filterButtonAtivo
+          ]} 
+          onPress={() => setShowDatePicker(true)}
         >
-          <CalendarIcon color={dataSelecionadaFormatada ? "#FFF" : "#999"} size={16} style={{marginRight: 5}} />
+          <CalendarIcon color={dataSelecionadaFormatada ? "#121411" : "#999"} size={16} style={{marginRight: 5}} />
           <Text style={[styles.filterText, dataSelecionadaFormatada && styles.filterTextAtivo]}>
             {dataSelecionadaFormatada || "Data"}
           </Text>
           {dataSelecionadaFormatada && (
-            <TouchableOpacity onPress={limparFiltroData} style={{marginLeft: 5}}>
-               {/* Use um ícone de X aqui ou texto */}
-               <Text style={{color: '#FFF', fontWeight: 'bold'}}>✕</Text>
+            <TouchableOpacity onPress={() => setDataSelecionadaFormatada(null)} style={{marginLeft: 5}}>
+               <X color="#121411" size={14} strokeWidth={3} />
             </TouchableOpacity>
           )}
         </TouchableOpacity>
 
-        {/* PLANTA */}
         <TouchableOpacity 
-          style={[styles.filterButton, filtroPlanta !== 'Todas' && styles.filterButtonAtivo]} 
+          style={[
+            styles.filterButton, 
+            { backgroundColor: isDarkMode ? '#121411' : '#FFF', borderColor: isDarkMode ? '#333' : '#EEE' },
+            filtroPlanta !== 'Todas' && styles.filterButtonAtivo
+          ]} 
           onPress={() => setMenuAberto('planta')}
         >
           <Text style={[styles.filterText, filtroPlanta !== 'Todas' && styles.filterTextAtivo]}>
             {filtroPlanta}
           </Text>
-          <ChevronDown color={filtroPlanta !== 'Todas' ? "#FFF" : "#999"} size={18} />
+          <ChevronDown color={filtroPlanta !== 'Todas' ? "#121411" : "#999"} size={18} />
         </TouchableOpacity>
 
-        {/* STATUS */}
         <TouchableOpacity 
-          style={[styles.filterButton, filtroStatus !== 'Todos' && styles.filterButtonAtivo]} 
+          style={[
+            styles.filterButton, 
+            { backgroundColor: isDarkMode ? '#121411' : '#FFF', borderColor: isDarkMode ? '#333' : '#EEE' },
+            filtroStatus !== 'Todos' && styles.filterButtonAtivo
+          ]} 
           onPress={() => setMenuAberto('status')}
         >
           <Text style={[styles.filterText, filtroStatus !== 'Todos' && styles.filterTextAtivo]}>
             {filtroStatus}
           </Text>
-          <ChevronDown color={filtroStatus !== 'Todos' ? "#FFF" : "#999"} size={18} />
+          <ChevronDown color={filtroStatus !== 'Todos' ? "#121411" : "#999"} size={18} />
         </TouchableOpacity>
       </View>
 
-      {/* Componente Nativo do Calendário */}
       {showDatePicker && (
         <DateTimePicker
           value={date}
           mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
           onChange={onChangeDate}
           maximumDate={new Date()}
+          themeVariant={isDarkMode ? 'dark' : 'light'}
         />
       )}
 
-      {/* Menus Suspensos (Modais) */}
-      <RenderDropdown 
-        visivel={menuAberto === 'planta'}
-        opcoes={opcoesPlanta}
-        selecionado={filtroPlanta}
-        aoSelecionar={setFiltroPlanta}
-        posicaoEsquerda="30%"
-      />
+      <RenderDropdown visivel={menuAberto === 'planta'} opcoes={opcoesPlanta} selecionado={filtroPlanta} aoSelecionar={setFiltroPlanta} posicaoEsquerda="29%" />
+      <RenderDropdown visivel={menuAberto === 'status'} opcoes={opcoesStatus} selecionado={filtroStatus} aoSelecionar={setFiltroStatus} posicaoEsquerda="51%" />
 
-      <RenderDropdown 
-        visivel={menuAberto === 'status'}
-        opcoes={opcoesStatus}
-        selecionado={filtroStatus}
-        aoSelecionar={setFiltroStatus}
-        posicaoEsquerda="55%"
-      />
-
-      {/* Lista de Cards */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130, paddingHorizontal: 20 }}>
         {dadosFiltrados.map((item) => (
           <TouchableOpacity 
             key={item.id} 
-            style={styles.historyCard}
+            style={[styles.historyCard, { backgroundColor: isDarkMode ? '#121411' : '#FFF', borderColor: isDarkMode ? '#222' : '#F0F0F0' }]}
             onPress={() => navigation.navigate('DiagnosticResult', { item })}
           >
             <View style={styles.cardInfo}>
-              <View style={styles.imagePlaceholder} />
+              <View style={[styles.imagePlaceholder, { backgroundColor: isDarkMode ? '#1A1D19' : '#EBF5FB' }]} />
               <View style={styles.textGroup}>
-                <Text style={styles.plantaNome}>{item.planta}</Text>
+                <Text style={[styles.plantaNome, { color: currentTheme.textPrimary }]}>{item.planta}</Text>
                 <Text style={[styles.plantaStatus, { color: item.corStatus }]}>{item.status}</Text>
-                <Text style={styles.plantaData}>{item.data}</Text>
+                <Text style={[styles.plantaData, { color: isDarkMode ? '#666' : '#BBB' }]}>{item.data}</Text>
               </View>
             </View>
             <View style={styles.cardActions}>
-              <View style={styles.divider} />
-              <TouchableOpacity onPress={() => handleDeletePress(item.id)} style={styles.deleteBtn}>
-                <Trash2 color="#C0392B" size={24} />
+              <View style={[styles.divider, { backgroundColor: isDarkMode ? '#333' : '#EEE' }]} />
+              <TouchableOpacity onPress={() => { setSelectedItem(item.id); setModalVisible(true); }} style={styles.deleteBtn}>
+                <Trash2 color="#E74C3C" size={22} />
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
         ))}
 
         {dadosFiltrados.length === 0 && (
-          <Text style={{ textAlign: 'center', color: '#999', marginTop: 40 }}>Nenhum registro encontrado.</Text>
+          <Text style={{ textAlign: 'center', color: isDarkMode ? '#444' : '#999', marginTop: 40 }}>Nenhum registro encontrado.</Text>
         )}
       </ScrollView>
 
@@ -219,45 +200,41 @@ export default function HistoryScreen({ navigation }) {
         title="Deseja eliminar?"
         message="Esta ação não poderá ser desfeita."
       />
-
-      
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: { flex: 1, backgroundColor: '#FFF'},
-  filterRow: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 25, marginTop: 10, zIndex: 10 },
+  safeContainer: { flex: 1 },
+  filterRow: { flexDirection: 'row', justifyContent: 'center', gap: 48, marginBottom: 25, marginTop: 10, zIndex: 10 },
   filterButton: { 
-    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#EEE', 
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: '#FFF' 
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1, 
+    paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12
   },
   filterButtonAtivo: { backgroundColor: '#47e426', borderColor: '#47e426' },
-  filterText: { marginRight: 5, color: '#999', fontWeight: '600', fontSize: 13 },
-  filterTextAtivo: { color: '#FFF' },
+  filterText: { marginRight: 4, color: '#999', fontWeight: '700', fontSize: 12 },
 
-  // Estilos do Dropdown
-  modalOverlay: { flex: 1, backgroundColor: 'transparent' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.2)' },
   dropdownContainer: {
-    position: 'absolute', top: 140,width: 150, backgroundColor: '#FFF',
-    borderRadius: 15, elevation: 10, shadowColor: '#000', shadowOpacity: 0.1,
-    shadowRadius: 10, borderWidth: 1, borderColor: '#F0F0F0', overflow: 'hidden'
+    position: 'absolute', top: 141, width: 160,
+    borderRadius: 18, elevation: 15, shadowColor: '#000', shadowOpacity: 0.2,
+    shadowRadius: 15, borderWidth: 1, overflow: 'hidden'
   },
-  dropdownOption: { flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderBottomColor: '#F9F9F9' },
-  dropdownText: { fontSize: 14, color: '#666' },
+  dropdownOption: { flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1 },
+  dropdownText: { fontSize: 14 },
 
-  // Cards
   historyCard: { 
-    flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 18, padding: 12, 
-    marginBottom: 15, borderWidth: 1, borderColor: '#F0F0F0', elevation: 2 
+    flexDirection: 'row', borderRadius: 20, padding: 14, 
+    marginBottom: 15, borderWidth: 1, elevation: 2,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5
   },
   cardInfo: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  imagePlaceholder: { width: 60, height: 60, borderRadius: 12, backgroundColor: '#EBF5FB' },
+  imagePlaceholder: { width: 65, height: 65, borderRadius: 14 },
   textGroup: { marginLeft: 15 },
-  plantaNome: { fontSize: 16, fontWeight: '700', color: '#1B1919' },
-  plantaStatus: { fontSize: 14, fontWeight: '600', marginVertical: 2 },
-  plantaData: { fontSize: 12, color: '#BBB' },
+  plantaNome: { fontSize: 17, fontWeight: '800' },
+  plantaStatus: { fontSize: 14, fontWeight: '700', marginVertical: 3 },
+  plantaData: { fontSize: 12 },
   cardActions: { flexDirection: 'row', alignItems: 'center' },
-  divider: { width: 1, height: '70%', backgroundColor: '#EEE', marginHorizontal: 12 },
+  divider: { width: 1, height: '60%', marginHorizontal: 12 },
   deleteBtn: { padding: 5 }
 });

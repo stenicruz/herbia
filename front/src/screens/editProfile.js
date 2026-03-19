@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, Image, KeyboardAvoidingView, Platform 
+  StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, Image, KeyboardAvoidingView, Platform, StatusBar 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -12,22 +12,24 @@ import {
   ShieldCheck
 } from 'lucide-react-native';
 
+import { THEME } from '../styles/Theme';
+import { useTheme } from '../context/ThemeContext';
 import { AppHeader, PrimaryButton, CustomInput } from '../components/central';
 
 export default function EditProfileScreen({ navigation }) {
- 
+  const { isDarkMode } = useTheme();
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
+
   const [name, setName] = useState('Sebastião Miguel');
   const [email, setEmail] = useState('sebastiao@gmail.com');
   const [avatar, setAvatar] = useState('https://github.com/identicon.png');
   
-  // Estados para senhas
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   
-  const activeColor = '#47e426';
+  const activeColor = THEME.primary;
 
-  // Função para selecionar/tirar foto
   const handlePickImage = async () => {
     Alert.alert(
       "Alterar Foto",
@@ -61,126 +63,161 @@ export default function EditProfileScreen({ navigation }) {
   };
 
   const handleSave = () => {
-    // Lógica de salvamento aqui
     Alert.alert("Sucesso", "Perfil atualizado com sucesso!");
     navigation.goBack();
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.safeContainer, { backgroundColor: currentTheme.background }]} edges={['top']}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       <AppHeader title="Editar Perfil" onBack={() => navigation.goBack()} />
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-
-      <ScrollView 
+        <ScrollView 
           showsVerticalScrollIndicator={false} 
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled" // Permite clicar nos botões mesmo com teclado aberto
+          keyboardShouldPersistTaps="handled"
         >
-        
-        <View style={styles.avatarSection}>
-          <TouchableOpacity onPress={handlePickImage} activeOpacity={0.8}>
-            <View style={styles.avatarContainer}>
-              <Image source={{ uri: avatar }} style={styles.avatar} />
-              <View style={styles.cameraOverlay}>
-                <Camera color="#FFF" size={20} />
+          
+          {/* Seção do Avatar */}
+          <View style={styles.avatarSection}>
+            <TouchableOpacity onPress={handlePickImage} activeOpacity={0.8}>
+              <View style={[styles.avatarContainer, { borderColor: activeColor }]}>
+                <Image source={{ uri: avatar }} style={styles.avatar} />
+                <View style={[styles.cameraOverlay, { backgroundColor: activeColor, borderColor: currentTheme.background }]}>
+                  <Camera color="#FFF" size={18} />
+                </View>
               </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Dados Pessoais */}
+          <View style={styles.inputSection}>
+            <CustomInput 
+              label="Nome Completo"
+              placeholder="Seu nome"
+              value={name}
+              onChangeText={setName}
+              icon={User}
+              darkMode={isDarkMode} // Passando prop caso seu CustomInput precise
+            />
+
+            <CustomInput 
+              label="E-mail"
+              placeholder="seuemail@gmail.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              icon={Mail}
+              darkMode={isDarkMode}
+            />
+          </View>
+
+          {/* Seção de Segurança */}
+          <View style={styles.passwordSection}>
+            <View style={styles.sectionTitleRow}>
+              <ShieldCheck color={activeColor} size={22} />
+              <Text style={[styles.sectionTitle, { color: currentTheme.textPrimary }]}>Segurança da Conta</Text>
             </View>
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.inputSection}>
-          <CustomInput 
-            label="Nome Completo"
-            placeholder="Seu nome"
-            value={name}
-            onChangeText={setName}
-            icon= {User} // Supondo que seu CustomInput mapeia strings para ícones
-          />
+            <View style={[
+              styles.passwordCard, 
+              { 
+                backgroundColor: isDarkMode ? '#121411' : '#FFF', 
+                borderColor: isDarkMode ? '#222' : '#F0F0F0' 
+              }
+            ]}>
+              <CustomInput 
+                label="Palavra-Passe Atual"
+                placeholder="**********"
+                value={currentPass}
+                onChangeText={setCurrentPass}
+                isPassword={true}
+                icon={Lock}
+                darkMode={isDarkMode}
+              />
 
-          <CustomInput 
-            label="E-mail"
-            placeholder="seuemail@gmail.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            icon= {Mail}
-          />
-        </View>
+              <CustomInput 
+                label="Nova Palavra-passe"
+                placeholder="**********"
+                value={newPass}
+                onChangeText={setNewPass}
+                isPassword={true}
+                icon={Lock}
+                darkMode={isDarkMode}
+              />
 
-        <View style={styles.passwordSection}>
-          <View style={styles.sectionTitleRow}>
-            <ShieldCheck color={activeColor} size={24} />
-            <Text style={styles.sectionTitle}>Alterar Palavra-Passe</Text>
+              <CustomInput 
+                label="Confirmar Nova Palavra-Passe"
+                placeholder="**********"
+                value={confirmPass}
+                onChangeText={setConfirmPass}
+                isPassword={true}
+                icon={Lock}
+                darkMode={isDarkMode}
+              />
+            </View>
           </View>
 
-          <View style={styles.passwordCard}>
-            {/* Palavra-Passe Actual */}
-            <CustomInput 
-              label="Palavra-Passe Actual"
-              placeholder="**********"
-              value={currentPass}
-              onChangeText={setCurrentPass}
-              isPassword={true}
-              icon= {Lock}
-            />
-
-            {/* Nova Palavra-passe */}
-            <CustomInput 
-              label="Nova Palavra-passe"
-              placeholder="**********"
-              value={newPass}
-              onChangeText={setNewPass}
-              isPassword={true}
-              icon= {Lock}
-            />
-
-            {/* Confirmar Palavra-Passe */}
-            <CustomInput 
-              label="Confirmar Palavra-Passe"
-              placeholder="**********"
-              value={confirmPass}
-              onChangeText={setConfirmPass}
-              isPassword={true}
-              icon= {Lock}
+          <View style={{ marginTop: 30, marginBottom: 20 }}>
+            <PrimaryButton
+              textStyle={{ fontSize: 16, fontWeight: '800' }} 
+              title="Salvar Alterações" 
+              onPress={handleSave} 
             />
           </View>
-        </View>
 
-        <View style={{ marginTop: 20 }}>
-          <PrimaryButton
-          textStyle={{fontSize: 18}} 
-            title="Salvar Alterações" 
-            onPress={handleSave} 
-          />
-        </View>
-
-      </ScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
-  safeContainer: { flex: 1, backgroundColor: '#FFF' },
+  safeContainer: { flex: 1 },
   scrollContent: { paddingHorizontal: 25, paddingBottom: 40 },
-  avatarSection: { alignItems: 'center', marginVertical: 30 },
-  avatarContainer: { width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: '#47e426', padding: 4 },
+  
+  avatarSection: { alignItems: 'center', marginVertical: 35 },
+  avatarContainer: { 
+    width: 130, 
+    height: 130, 
+    borderRadius: 65, 
+    borderWidth: 3, 
+    padding: 5,
+    position: 'relative'
+  },
   avatar: { width: '100%', height: '100%', borderRadius: 60 },
   cameraOverlay: { 
-    position: 'absolute', bottom: 0, right: 0, 
-    backgroundColor: '#47e426', width: 36, height: 36, 
-    borderRadius: 18, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 3, borderColor: '#FFF'
+    position: 'absolute', 
+    bottom: 5, 
+    right: 5, 
+    width: 38, 
+    height: 38, 
+    borderRadius: 19, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    borderWidth: 3,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 3
   },
-  passwordSection: { marginTop: 30 },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1B1919', marginLeft: 10 },
+
+  passwordSection: { marginTop: 35 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
+  sectionTitle: { fontSize: 17, fontWeight: '800', marginLeft: 10, letterSpacing: 0.3 },
+  
   passwordCard: { 
-    backgroundColor: '#FFF', borderWidth: 1, borderColor: '#F0F0F0', 
-    borderRadius: 20, padding: 15, elevation: 2, shadowColor: '#000', 
-    shadowOpacity: 0.05, shadowRadius: 10 
+    borderWidth: 1, 
+    borderRadius: 24, 
+    padding: 20,
+    // Sutil elevação apenas para o modo claro
+    shadowColor: '#000', 
+    shadowOpacity: 0.04, 
+    shadowRadius: 15,
+    elevation: 1 
   },
 });
