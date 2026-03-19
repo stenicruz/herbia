@@ -20,7 +20,7 @@ export const BottomTabBar = ({ state, navigation }) => {
     Profile: { label: 'Perfil', icon: User },
     AdminHome: { label: 'Painel', icon: LayoutDashboard },
     UserManagement: { label: 'Usuários', icon: Users },
-    Culture: { label: 'Culturas', icon: Leaf },
+    Plant: { label: 'Plantas', icon: Leaf },
   };
 
   const tabs = state.routes;

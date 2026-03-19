@@ -6,17 +6,22 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { 
   Home, Users, Leaf, User as UserIcon, Camera 
 } from 'lucide-react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
+import { AppHeader } from '../components/AppHeader';
 
 const ACTIVE_GREEN = '#47e426';
+
 
 export default function CulturesScreen() {
   const { isDarkMode } = useTheme();
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
   const insets = useSafeAreaInsets();
   
+  const [search, setSearch] = useState('');
+
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedCulture, setSelectedCulture] = useState(null);
@@ -44,12 +49,35 @@ export default function CulturesScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]} edges={['top', 'left', 'right']}>
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       
+      <AppHeader
+      title={'Gerenciar Culturas'}/>
+      
+      <View style={[
+        styles.searchContainer, 
+        { 
+          backgroundColor: isDarkMode ? '#1A1D19' : '#FFF', 
+          borderColor: isDarkMode ? '#333' : '#E0EEDF' 
+        }
+      ]}>
+        <MaterialCommunityIcons 
+          name="magnify" 
+          size={24} 
+          color={isDarkMode ? '#AAA' : '#666'} 
+        />
+        <TextInput
+          style={[styles.searchInput, { color: currentTheme.textPrimary }]}
+          placeholder="Pesquisar cultura..."
+          placeholderTextColor={isDarkMode ? '#555' : '#b1adad'}
+          value={search}
+          onChangeText={setSearch}
+        />
+      </View>
+      
       <View style={styles.mainContent}>
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: currentTheme.textPrimary }]}>Culturas</Text>
-        </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          
+          
           <TouchableOpacity style={styles.addBtn} onPress={() => setAddModalVisible(true)}>
             <Text style={styles.addBtnText}>Adicionar nova Cultura</Text>
           </TouchableOpacity>
@@ -64,22 +92,6 @@ export default function CulturesScreen() {
             contentContainerStyle={styles.gridContainer}
           />
         </ScrollView>
-      </View>
-
-      {/* MENU INFERIOR */}
-      <View style={[
-        styles.bottomNav, 
-        { 
-          height: 70 + insets.bottom, 
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
-          backgroundColor: isDarkMode ? '#121411' : '#FFF',
-          borderTopColor: isDarkMode ? '#222' : '#F0F0F0'
-        }
-      ]}>
-        <TouchableOpacity style={styles.navItem}><Home color="#999" size={24} /><Text style={styles.navText}>Casa</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}><Users color="#999" size={24} /><Text style={styles.navText}>Users</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}><Leaf color={ACTIVE_GREEN} size={24} /><Text style={[styles.navText, {color: ACTIVE_GREEN}]}>Culturas</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}><UserIcon color="#999" size={24} /><Text style={styles.navText}>Perfil</Text></TouchableOpacity>
       </View>
 
       {/* MODAL ADICIONAR */}
@@ -202,6 +214,27 @@ const styles = StyleSheet.create({
   inputWrapper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 15, paddingHorizontal: 15, height: 55 },
   input: { flex: 1 },
   
+searchContainer: {
+  width:'90%',
+  alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#E0EEDF',
+    height: 50,
+    marginBottom: 0,
+    marginTop:20
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+
   saveBtn: { backgroundColor: ACTIVE_GREEN, width: '100%', height: 45, borderRadius: 15, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   saveBtnText: { color: '#FFF', fontWeight: '800', fontSize: 16 },
   deleteBtn: { backgroundColor: '#CC0000', width: '100%', height: 45, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },

@@ -13,15 +13,18 @@ import AdminTips from '../screens/AdminTips.js';
 import AllAnalyses from '../screens/AllAnalyses.js'
 import CameraScanner from '../screens/CameraScanner.js';
 import ConfirmPhoto from '../screens/ConfirmPhoto.js';
-import Culture from '../screens/Culture.js';
+import CultureManager from '../screens/CultureManager.js';
 import DiagnosticSupport from '../screens/DiagnosticSupport.js';
 import DiagnosticResult from '../screens/DiagnosticResult.js';
+import DiseaseManager from '../screens/DiseaseManager.js';
+import EditDisease from '../screens/EditDisease.js';
 import EditProfile from '../screens/EditProfile.js';
 import ForgotPassword from '../screens/ForgotPassword.js';
 import History from '../screens/History.js';
 import Home from '../screens/Home.js';
 import Login from '../screens/Login';
 import Onboarding from '../screens/Onboarding';
+import Plant from '../screens/Plant.js'
 import PhotoConfirmation from '../screens/PhotoConfirmation.js';
 import PhotoSupport from '../screens/PhotoSupport.js';
 import PrivacyPolicy from '../screens/PrivacyPolicy.js';
@@ -65,7 +68,7 @@ function AdminTabs() {
     >
       <Tab.Screen name="AdminHome" component={AdminHome} /> 
       <Tab.Screen name="UserManagement" component={UserManagement} />
-      <Tab.Screen name="Culture" component={Culture} />
+      <Tab.Screen name="Plant" component={Plant} />
       <Tab.Screen name="Profile" component={Profile} /> 
     </Tab.Navigator>
   );
@@ -141,6 +144,9 @@ export default function Routes() {
           <Stack.Screen name="AllAnalyses" component={AllAnalyses} />
           <Stack.Screen name="UserDetails" component={UserDetails} />
           <Stack.Screen name="AdminTips" component={AdminTips} />
+          <Stack.Screen name="CultureManager" component={CultureManager} />
+          <Stack.Screen name="DiseaseManager" component={DiseaseManager} />
+          <Stack.Screen name="EditDisease" component={EditDisease} />
         </Stack.Group>
       )}
     </Stack.Navigator>
