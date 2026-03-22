@@ -10,28 +10,48 @@ const googleClient = new OAuth2Client('691168137852-d8n5v7st68kojqntlu1t7b5cuf15
 
 // --- REGISTAR ---
 export const registrar = async (req, res) => {
+  console.log("📍 RECEBI UM PEDIDO DE REGISTRO!");
+  console.log("Dados recebidos:", req.body);
   const { nome, email, senha } = req.body;
   const db = await setupDb();
   const hash = await bcrypt.hash(senha, 10);
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
+    // 1. Salva na BD primeiro
     await db.run(
       `INSERT INTO usuarios (nome, email, senha, email_verificado, token_email, tipo_usuario, ativo)
        VALUES (?, ?, ?, 0, ?, 'usuario', 1)`,
       [nome, email, hash, codigo]
     );
+    console.log("✅ [DB] Usuário inserido!");
 
-    // Usamos o sendEmail do nosso config/mailer.js
-    await sendEmail(
-      email,
-      'Confirma o teu e-mail 🌿',
-      `<div style="text-align: center;"><h1>Código: ${codigo}</h1></div>`
-    );
+    // 2. Tenta enviar o e-mail num bloco separado para não quebrar o registro
+    try {
+      console.log("⏳ [MAIL] Enviando para:", email);
+      await sendEmail(
+        email,
+        'Confirma o teu e-mail 🌿',
+        `<div style="text-align: center;"><h1>Código: ${codigo}</h1></div>`
+      );
+      console.log("✅ [MAIL] Enviado com sucesso!");
+    } catch (mailError) {
+      console.error("⚠️ [MAIL] Falha no envio:", mailError.message);
+      // Aqui o registro continua, pois o user já está no SQLite!
+    }
 
     res.status(201).json({ sucesso: true });
+
   } catch (err) {
-    res.status(400).json({ error: 'Este e-mail já está em uso.' });
+    console.log("🚨 [ERRO NO REGISTRO]:");
+    console.error(err);
+    
+    // Diferenciar erro de email repetido de erro de servidor
+    const msg = err.message.includes('UNIQUE') 
+      ? 'Este e-mail já está em uso.' 
+      : 'Erro ao criar conta no servidor.';
+      
+    res.status(400).json({ error: msg });
   }
 };
 
@@ -45,6 +65,13 @@ export const login = async (req, res) => {
   if (!user.senha) {
     return res.status(400).json({ 
       error: 'Esta conta foi criada com Google. Use o botão "Continuar com Google" para entrar.' 
+    });
+  }
+  if (!user.email_verificado) {
+    return res.status(403).json({ 
+      error: 'EMAIL_NOT_VERIFIED', // Usamos um código fixo para o Frontend identificar
+      message: 'Email não verificado. Verifique o seu email.',
+      email: user.email // Importante para a navegação no telemóvel
     });
   }
 
@@ -110,9 +137,13 @@ export const loginGoogle = async (req, res) => {
       // 3. Se não existe, cria conta (já verificada pois vem do Google)
       const result = await db.run(
         `INSERT INTO usuarios (nome, email, google_id, foto_perfil, auth_provider, tipo_usuario, ativo, email_verificado)
-         VALUES (?, ?, ?, ?, 'google', 'usuario', 1, 1)`,
+        VALUES (?, ?, ?, ?, 'google', 'usuario', 1, 1)`,
         [name, email, google_id, picture]
       );
+      console.log("----------------------------");
+console.log("USUÁRIO INSERIDO COM SUCESSO!");
+console.log("ID GERADO:", result.lastID);
+console.log("----------------------------");
       user = await db.get('SELECT * FROM usuarios WHERE id = ?', [result.lastID]);
     } else {
       // 4. Se existe mas não tinha Google ID (criou com email/senha antes), atualiza
@@ -156,28 +187,50 @@ export const loginGoogle = async (req, res) => {
   }
 };
 
-// --- VALIDAR CÓDIGO ---
-export const validarCodigo = async (req, res) => {
+// --- 1. VERIFICAR EMAIL (Para novos cadastros) ---
+export const verificarEmailRegistro = async (req, res) => {
   const { email, codigo } = req.body;
   const db = await setupDb();
+  
   const user = await db.get('SELECT * FROM usuarios WHERE email = ? AND token_email = ?', [email, codigo]);
   
   if (user) {
+    // ATIVA A CONTA e limpa o código
     await db.run('UPDATE usuarios SET email_verificado = 1, token_email = NULL WHERE email = ?', [email]);
-    res.json({ sucesso: true });
+    res.json({ sucesso: true, message: 'Conta ativada com sucesso!' });
   } else {
-    res.status(400).json({ error: 'Código incorreto' });
+    res.status(400).json({ error: 'Código de ativação incorreto.' });
+  }
+};
+
+// --- 2. VALIDAR CÓDIGO RECUPERAÇÃO (Apenas checagem) ---
+export const validarCodigoRecuperacao = async (req, res) => {
+  const { email, codigo } = req.body;
+  const db = await setupDb();
+  
+  const user = await db.get('SELECT * FROM usuarios WHERE email = ? AND token_email = ?', [email, codigo]);
+  
+  if (user) {
+    // NÃO limpa o token ainda e NÃO mexe no email_verificado
+    // Apenas confirma que o código está certo para o utilizador avançar de tela
+    res.json({ sucesso: true, message: 'Código validado.' });
+  } else {
+    res.status(400).json({ error: 'Código de recuperação inválido.' });
   }
 };
 
 // --- REENVIAR CÓDIGO ---
 export const reenviarCodigo = async (req, res) => {
-  const { email } = req.body;
+  const { email, motivo } = req.body; // Adicionamos 'motivo' para saber se é registro ou recuperação
   const db = await setupDb();
   const user = await db.get('SELECT * FROM usuarios WHERE email = ?', [email]);
 
   if (!user) return res.status(404).json({ error: 'Email não encontrado.' });
-  if (user.email_verificado) return res.status(400).json({ error: 'Email já verificado.' });
+
+  // Só bloqueamos se o motivo NÃO for recuperação e o email já estiver verificado
+  if (motivo !== 'recuperacao' && user.email_verificado) {
+    return res.status(400).json({ error: 'Este email já foi verificado e a conta está ativa.' });
+  }
 
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
   await db.run('UPDATE usuarios SET token_email = ? WHERE email = ?', [codigo, email]);
@@ -185,7 +238,11 @@ export const reenviarCodigo = async (req, res) => {
   await sendEmail(
     email,
     'Novo código de verificação 🌿',
-    `<div style="text-align: center;"><h1>Código: ${codigo}</h1></div>`
+    `<div style="font-family: sans-serif; text-align: center;">
+      <h2>Seu novo código é:</h2>
+      <h1 style="color: #47e426; font-size: 40px;">${codigo}</h1>
+      <p>Este código expira em breve.</p>
+    </div>`
   );
 
   res.json({ sucesso: true });
@@ -219,7 +276,7 @@ export const recuperarSenha = async (req, res) => {
 export const redefinirSenha = async (req, res) => {
   const { email, codigo, novaSenha } = req.body;
   const db = await setupDb();
-  const user = await db.get('SELECT * FROM usuarios WHERE email = ? AND token_email = ?', [email, codigo]);
+  const user = await db.get('SELECT * FROM usuarios WHERE email = ? AND token_email = ?', [email, String(codigo)]);
   
   if (!user) return res.status(400).json({ error: 'Código inválido ou expirado.' });
 

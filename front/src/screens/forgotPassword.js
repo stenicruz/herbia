@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -16,10 +16,47 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { CustomInput, PrimaryButton, AppHeader } from '../components/central.js';
+import { Alert, ActivityIndicator } from 'react-native';
+import authService from '../services/authService';
+
 
 const { height } = Dimensions.get('window');
 
 export default function ForgotPassword({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSendCode = async () => {
+    if (!email) {
+      Alert.alert("Atenção", "Por favor, insira o seu e-mail.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Chama a rota recuperarSenha do seu backend
+      await authService.forgotPassword(email); 
+
+      Alert.alert(
+        "Código Enviado",
+        "Verifique a sua caixa de entrada.",
+        [
+          { 
+            text: "OK", 
+            onPress: () => navigation.navigate('VerifyCode', { 
+              email: email, 
+              type: 'forgot_password' // IMPORTANTE: para a tela saber que não é registro
+            }) 
+          }
+        ]
+      );
+    } catch (err) {
+      Alert.alert("Erro", err.error || "Não foi possível enviar o código.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const { isDarkMode } = useTheme();
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
@@ -76,16 +113,22 @@ export default function ForgotPassword({ navigation }) {
                 label="E-mail"
                 placeholder="seuemail@exemplo.com"
                 icon={Mail}
+                value={email}
+                onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
 
-              <PrimaryButton 
-                title="Enviar Código"
-                onPress={() => navigation.navigate('VerifyCode')}
-                borderRadius={12}
-                style={{ marginTop: 15 }}
-              />
+              {loading ? (
+                <ActivityIndicator size="large" color={THEME.primary} style={{ marginTop: 20 }} />
+              ) : (
+                <PrimaryButton 
+                  title="Enviar Código"
+                  onPress={handleSendCode}
+                  borderRadius={12}
+                  style={{ marginTop: 15 }}
+                />
+              )}
             </View>
           </View>
         </ScrollView>

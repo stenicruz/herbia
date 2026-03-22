@@ -7,7 +7,8 @@ import {
   Platform, 
   ScrollView,
   StatusBar,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Lock, ShieldCheck, RefreshCcw } from 'lucide-react-native';
@@ -15,29 +16,47 @@ import { Lock, ShieldCheck, RefreshCcw } from 'lucide-react-native';
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { AppHeader, PrimaryButton, CustomInput } from '../components/central.js';
+import authService from '../services/authService';
 
-export default function ResetPassword({ navigation }) {
+export default function ResetPassword({ navigation, route }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const { email, code } = route.params || {};
   
   const { isDarkMode } = useTheme();
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
-  const handleReset = () => {
+  const handleReset = async () => {
+    // Validações básicas
     if (!password || !confirmPassword) {
       Alert.alert("Erro", "Por favor, preencha todos os campos.");
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres.");
       return;
     }
     if (password !== confirmPassword) {
       Alert.alert("Erro", "As senhas não coincidem!");
       return;
     }
-    
-    // Simulação de sucesso
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Success' }], 
-    });
+
+    setLoading(true);
+    try {
+      // 3. Chamada ao backend usando o email e código guardados
+      await authService.resetPassword(email, code, password);
+
+      navigation.reset({
+            index: 0,
+            routes: [{ name: 'Success' }], 
+          });
+    } catch (err) {
+      Alert.alert("Erro", err.error || "Não foi possível redefinir a senha.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -109,11 +128,15 @@ export default function ResetPassword({ navigation }) {
                 onChangeText={setConfirmPassword}
               />
 
-              <PrimaryButton 
-                title="Redefinir Senha"
-                onPress={handleReset}
-                style={{ marginTop: 30, width: '100%' }}
-              />
+              {loading ? (
+                <ActivityIndicator size="large" color={THEME.primary} style={{ marginTop: 30 }} />
+              ) : (
+                <PrimaryButton 
+                  title="Redefinir Senha"
+                  onPress={handleReset}
+                  style={{ marginTop: 30, width: '100%' }}
+                />
+              )}
             </View>
 
           </View>

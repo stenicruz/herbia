@@ -24,6 +24,28 @@ export default function Decision({ navigation }) {
   const { isDarkMode } = useTheme();
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
+  const handleGuestAccess = async () => {
+    try {
+      // 1. Removemos os dados de login para garantir que o estado seja 'null'
+      await AsyncStorage.removeItem('@Herbia:token');
+      await AsyncStorage.removeItem('@Herbia:user');
+      
+      // Opcional: Se quiser limpar TUDO (cuidado se tiver preferências de tema/idioma)
+      // await AsyncStorage.clear(); 
+
+      console.log("Sessão de convidado iniciada (dados antigos limpos)");
+
+      // 2. Navega para a Home
+      navigation.reset({
+      index: 0,
+      routes: [{ name: 'Main' }],
+    }); 
+    } catch (error) {
+      console.error("Erro ao limpar sessão:", error);
+      navigation.navigate('MainTabs');
+    }
+  };
+
   // Função "Secreta" para Desenvolvedor
   const resetOnboarding = async () => {
     try {
@@ -91,7 +113,7 @@ export default function Decision({ navigation }) {
         />
 
         <PrimaryButton 
-          onPress={() => navigation.navigate('Main')}
+          onPress={handleGuestAccess}
           variant="outline"
           borderRadius={25}
           icon={ArrowRightCircle}

@@ -1,5 +1,5 @@
 import express from 'express';
-import * as authController from '../controllers/authController.js';
+import * as authController from '../controllers/authcontroller.js';
 import { auth } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -11,7 +11,8 @@ router.post('/registrar', authController.registrar);
 router.post('/login', authController.login);
 
 // Verificação de Email
-router.post('/validar-codigo', authController.validarCodigo);
+router.post('/validar-email', authController.verificarEmailRegistro);
+router.post('/validar-codigo', authController.validarCodigoRecuperacao);
 router.post('/reenviar-codigo', authController.reenviarCodigo);
 
 // Recuperação de Senha

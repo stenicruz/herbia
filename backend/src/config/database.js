@@ -1,9 +1,10 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import path from 'path';
 
 async function setupDb() {
     const db = await open({
-        filename: '../../herbiadb.sqlite',
+        filename: path.resolve('herbiadb.sqlite'),
         driver: sqlite3.Database
     });
 
@@ -91,7 +92,8 @@ async function setupDb() {
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
         );
     `);
-
+    const tableCheck = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='usuarios'");
+    console.log(tableCheck ? "✅ Tabela 'usuarios' pronta!" : "❌ Tabela 'usuarios' NÃO ENCONTRADA!");
     return db;
 }
 

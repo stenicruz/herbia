@@ -66,7 +66,10 @@ export default function SuccessScreen({ navigation }) {
         <PrimaryButton
           title={"Ir para Login"}
           icon={ArrowRight}
-          onPress={() => navigation.navigate('Login')}
+          onPress={() => navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }], 
+          })}
           style={{ width: '100%' }}
         />
       </View>

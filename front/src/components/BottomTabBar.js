@@ -1,7 +1,8 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, History, Camera, User, LayoutDashboard, Users, Leaf } from 'lucide-react-native'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
@@ -9,10 +10,20 @@ import { useTheme } from '../context/ThemeContext';
 export const BottomTabBar = ({ state, navigation }) => {
   const insets = useSafeAreaInsets();
   const { isDarkMode } = useTheme();
-  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
+  const [isGuest, setIsGuest] = useState(true);
 
+  const currentTheme = isDarkMode ? THEME.dark : THEME.light;
   const activeColor = THEME.primary;
   const inactiveColor = isDarkMode ? '#969494' : '#999';
+
+// Verificar se é convidado sempre que o componente montar ou mudar de aba
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await AsyncStorage.getItem('@Herbia:token');
+      setIsGuest(!token);
+    };
+    checkAuth();
+  }, [state.index]); // Re-verifica quando muda de aba
 
   const screenConfigs = {
     Home: { label: 'Casa', icon: Home },
@@ -39,7 +50,9 @@ export const BottomTabBar = ({ state, navigation }) => {
       {!isAdminFlow ? (
         /* --- LAYOUT USUÁRIO (Câmera flutuante no meio) --- */
         <>
+          {/* --- ABAS ANTES DA CÂMERA --- */}
           {tabs.slice(0, 2).map((route, index) => {
+            if (isGuest && route.name === 'History') return null;
             const isFocused = state.index === index;
             const config = screenConfigs[route.name] || { label: route.name, icon: Home };
             const Icon = config.icon;
@@ -73,7 +86,7 @@ export const BottomTabBar = ({ state, navigation }) => {
             </TouchableOpacity>
             <Text style={[styles.tabLabel, { color: inactiveColor }]}>Câmera</Text>
           </View>
-
+          {/* --- ABAS DEPOIS DA CÂMERA (Perfil) --- */}
           {tabs.slice(2).map((route, index) => {
             const isFocused = state.index === index + 2;
             const config = screenConfigs[route.name] || { label: route.name, icon: User };

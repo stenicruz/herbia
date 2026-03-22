@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -9,7 +9,9 @@ import {
   ScrollView,
   StatusBar,
   Dimensions,
-  TouchableOpacity
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Mail, Lock } from 'lucide-react-native';
@@ -17,6 +19,11 @@ import { Mail, Lock } from 'lucide-react-native';
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { CustomInput, PrimaryButton } from '../components/central.js';
+import authService from '../services/authService';
+import { 
+  GoogleSignin, 
+  statusCodes
+} from '@react-native-google-signin/google-signin';
 
 const { height } = Dimensions.get('window');
 
@@ -25,13 +32,103 @@ export default function Login({ navigation }) {
   const { isDarkMode } = useTheme();
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
-  const isAdmin = true; 
+  // --- ESTADOS PARA O FORMULÁRIO ---
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: '691168137852-d8n5v7st68kojqntlu1t7b5cuf15dvp9.apps.googleusercontent.com', // O teu ID
+      offlineAccess: true,
+    });
+  }, []);
+
+const handleGoogleLogin = async () => {
+  try {
+    setLoading(true);
+    await GoogleSignin.hasPlayServices();
+    
+    const userInfo = await GoogleSignin.signIn();
+
+    // Se o usuário fechar a janela, algumas versões retornam null em vez de erro
+    if (!userInfo || !userInfo.data) {
+      console.log("LOG: Janela fechada ou dados vazios.");
+      setLoading(false);
+      return; // Sai da função sem mostrar erro ao usuário
+    }
+
+    const { idToken } = userInfo.data; 
+
+    const response = await authService.loginGoogle(idToken);
+    
     navigation.reset({
       index: 0,
-      routes: [{ name: isAdmin ? 'AdminMain' : 'Main' }],
+      routes: [{ name: response.user.role === 'admin' ? 'AdminMain' : 'Main' }], // Verifique se usa response.user.role
     });
+
+  } catch (error) {
+    // Verificamos se statusCodes existe para evitar o ReferenceError anterior
+    const isCancel = error?.code === (statusCodes?.SIGN_IN_CANCELLED || '12501');
+    
+    if (isCancel) {
+      console.log("LOG: Usuário cancelou o login.");
+    } else {
+      console.error("Erro detalhado:", error);
+      const msg = error?.response?.data?.error || error?.message || "Erro ao entrar com Google";
+      Alert.alert("Erro", msg);
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const handleLogin = async () => {
+    // 1. Validação simples
+    if (!email || !senha) {
+      Alert.alert("Atenção", "Por favor, preencha todos os campos.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 2. Chamada ao serviço (usa o IP configurado no api.js)
+      const data = await authService.login(email, senha);
+
+      // 3. Redirecionamento baseado no tipo de usuário real do Banco de Dados
+      const routeName = data.user.tipo_usuario === 'admin' ? 'AdminMain' : 'Main';
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: routeName }],
+      });
+
+    } catch (err) {
+      // --- LOGICA DE VERIFICAÇÃO DE EMAIL ---
+      // Se o erro vier do teu Backend com a flag de e-mail não verificado:
+      if (err.error === 'EMAIL_NOT_VERIFIED') {
+        Alert.alert(
+          "Conta não ativada",
+          "O seu e-mail ainda não foi verificado. Deseja inserir o código agora?",
+          [
+            { 
+              text: "Verificar Agora", 
+              onPress: () => navigation.navigate('VerifyCode', { 
+                email: email, // Usa o e-mail que já está no input de login
+                type: 'register' 
+              }) 
+            },
+            { text: "Depois", style: "cancel" }
+          ]
+        );
+      } else {
+        // Erros comuns (Senha errada, e-mail não existe, etc)
+        Alert.alert("Erro no Login", err.error || "Não foi possível conectar ao servidor.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,6 +175,9 @@ export default function Login({ navigation }) {
               placeholder="nome@exemplo.com"
               icon={Mail}
               keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail} // Captura o email
+              autoCapitalize="none"
             />
 
             <CustomInput 
@@ -85,14 +185,21 @@ export default function Login({ navigation }) {
               placeholder="********"
               icon={Lock}
               isPassword={true}
+              value={senha}
+              onChangeText={setSenha} // Captura a senha
             />
 
-            <PrimaryButton 
-              title="Entrar" 
-              onPress={handleLogin} 
-              borderRadius={12}
-              style={{ marginTop: 10 }}
-            />
+            {/* Mostra um loading enquanto o servidor processa */}
+            {loading ? (
+              <ActivityIndicator size="large" color={THEME.primary} style={{ marginTop: 20 }} />
+            ) : (
+              <PrimaryButton 
+                title="Entrar" 
+                onPress={handleLogin} 
+                borderRadius={12}
+                style={{ marginTop: 10 }}
+              />
+            )}
           </View>
 
           {/* Divisor "ou" */}
@@ -105,7 +212,7 @@ export default function Login({ navigation }) {
           {/* Botão Google - Adaptado para Dark Mode */}
           <PrimaryButton 
             title="Continue com o Google"
-            onPress={() => {}}
+            onPress={handleGoogleLogin}
             borderRadius={12}
             style={[
               styles.googleButton, 

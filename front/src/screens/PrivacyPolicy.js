@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { 
   StyleSheet, StatusBar, View, Text, TouchableOpacity, ScrollView, Alert, Dimensions 
 } from 'react-native';
@@ -10,6 +9,8 @@ import {
   CheckCircle2,
   ChevronRight
 } from 'lucide-react-native';
+import { useEffect, useState } from 'react'; // Adiciona useEffect
+import authService from '../services/authService'; // Importa o nosso service
 
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
@@ -23,14 +24,39 @@ export default function PrivacyPolicyScreen({ route, navigation }) {
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
   const activeColor = THEME.primary;
 
-  const isLogged = route.params?.isLogged ?? false;
+  const [isLogged, setIsLogged] = useState(false);
 
-  const confirmDeletion = () => {
+useEffect(() => {
+    const checkAuth = async () => {
+      const logged = await authService.isLoggedIn();
+      setIsLogged(logged);
+    };
+    checkAuth();
+  }, []);
+
+  const confirmDeletion = async () => {
     setModalVisible(false);
-    console.log("Conta excluída");
+    
+    try {
+      // Aqui chamarias a função do backend para apagar os dados
+      // await userService.deleteAccount(); 
+      
+      // Depois de apagar no banco, fazemos o logout local
+      await authService.logout();
+      
+      Alert.alert("Conta Excluída", "Os seus dados foram removidos com sucesso.");
+      
+      // Reinicia a navegação para o ecrã de início
+      navigation.reset({ index: 0, routes: [{ name: 'AccessMode' }] });
+      
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível excluir a conta. Tente novamente.");
+    }
   };
+
   
   const handleDeletePress = () => {
+    // Agora a verificação é baseada no estado real do token
     if (!isLogged) {
       Alert.alert(
         "Acesso Negado",

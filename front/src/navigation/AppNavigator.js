@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import authService from '../services/authService';
 
 // IMPORTAÇÃO QUE FALTA:
 import { BottomTabBar } from '../components/central.js'; 
@@ -77,18 +78,30 @@ function AdminTabs() {
 export default function Routes() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFirstTime, setIsFirstTime] = useState(null);
+  const [userType, setUserType] = useState(null); // 'admin', 'user' ou null
 
-  useEffect(() => {
-    checkFirstLaunch();
+useEffect(() => {
+    checkInitialState();
   }, []);
 
-  async function checkFirstLaunch() {
+  async function checkInitialState() {
     try {
-      const value = await AsyncStorage.getItem('@alreadyLaunched');
-      setIsFirstTime(value === null);
+      // 1. Verifica se é a primeira vez (Onboarding)
+      const alreadyLaunched = await AsyncStorage.getItem('@alreadyLaunched');
+      setIsFirstTime(alreadyLaunched === null);
+
+      // 2. Verifica se já está logado e que tipo de user é
+      const token = await AsyncStorage.getItem('@Herbia:token');
+      const userData = await AsyncStorage.getItem('@Herbia:user');
+
+      if (token && userData) {
+        const user = JSON.parse(userData);
+        setUserType(user.tipo_usuario); // 'admin' ou 'comum' (ajusta conforme o teu banco)
+      }
     } catch (e) {
-      setIsFirstTime(false);
+      console.error(e);
     } finally {
+      // Tempo para a Splash Screen aparecer
       setTimeout(() => setIsLoading(false), 2000);
     }
   }
@@ -98,7 +111,7 @@ export default function Routes() {
     setIsFirstTime(false);
   };
 
-  if (isLoading || isFirstTime === null) return <MySplash />;
+  if (isLoading) return <MySplash />;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -108,7 +121,15 @@ export default function Routes() {
         </Stack.Screen>
       ) : (
         <Stack.Group>
-          <Stack.Screen name="AccessMode" component={AccessMode} />
+          {/* LÓGICA DE REDIRECIONAMENTO AUTOMÁTICO */}
+          {userType === 'admin' ? (
+            <Stack.Screen name="AdminMain" component={AdminTabs} />
+          ) : userType === 'comum' ? (
+            <Stack.Screen name="Main" component={MainTabs} />
+          ) : (
+            <Stack.Screen name="AccessMode" component={AccessMode} />
+          )}
+          {/* Restante das telas que podem ser chamadas via navigation.navigate */}
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Register" component={Register} />
           <Stack.Screen 
