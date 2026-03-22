@@ -26,22 +26,30 @@ export default function EditDisease({ navigation }) {
   const [culturaSelecionada, setCulturaSelecionada] = useState(null);
   const [modalCulturaVisible, setModalCulturaVisible] = useState(false);
 
+  // --- NOVO ESTADO PARA O CAMPO ESTADO ---
+  const [estadoSelecionado, setEstadoSelecionado] = useState(null);
+  const [modalEstadoVisible, setModalEstadoVisible] = useState(false);
+
   const listaCulturas = [
     { id: '1', name: 'Tomateiro' },
-    { id: '2', name: 'Soja' },
-    { id: '3', name: 'Videira' },
+    { id: '2', name: 'Mandioca' },
+    { id: '3', name: 'Batateira' },
     { id: '4', name: 'Milho' },
-    { id: '5', name: 'Abacate' },
-    { id: '6', name: 'Cereja' },
-    { id: '7', name: 'Cereja' },
+  ];
+
+  // Opções para o novo seletor
+  const listaEstados = [
+    { id: 'saudavel', name: 'Saudável', icon: 'check-circle-outline' },
+    { id: 'doente', name: 'Doente', icon: 'alert-circle-outline' },
   ];
 
   const handleSave = () => {
-    if (!nome || !culturaSelecionada || !labelIA) {
-      Alert.alert("Erro", "Preencha Nome, Cultura e Label da IA.");
+    // Adicionada validação do estado selecionado
+    if (!nome || !culturaSelecionada || !labelIA || !estadoSelecionado) {
+      Alert.alert("Erro", "Preencha Nome, Cultura, Estado e Label da IA.");
       return;
     }
-    Alert.alert("Sucesso", "Doença registrada!");
+    Alert.alert("Sucesso", "Registro concluído!");
     navigation.goBack();
   };
 
@@ -76,13 +84,14 @@ export default function EditDisease({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
-      <AppHeader title="Configurar Doença" />
+      <AppHeader title="Configurar Registro" />
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
-          <InputField label="Nome da Doença" icon="virus-outline" placeholder="Ex: Ferrugem" value={nome} onChange={setNome} />
+          <InputField label="Nome de Exibição" icon="virus-outline" placeholder="Ex: Ferrugem Tardia" value={nome} onChange={setNome} />
 
+          {/* SELETOR DE CULTURA */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
               <MaterialCommunityIcons name="sprout" size={18} color={ACTIVE_GREEN} />
@@ -99,73 +108,97 @@ export default function EditDisease({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          <InputField label="Label da IA" icon="robot-outline" placeholder="Ex: tomato_rust" value={labelIA} onChange={setLabelIA} />
-          <InputField label="Descrição" icon="text-search" placeholder="Sintomas..." value={descricao} onChange={setDescricao} multiline />
-          <InputField label="Prevenção" icon="shield-check-outline" placeholder="Como evitar..." value={prevencao} onChange={setPrevencao} multiline />
-          <InputField label="Tratamento Bio" icon="leaf" placeholder="Caseiro..." value={tratamentoCaseiro} onChange={setTratamentoCaseiro} multiline />
-          <InputField label="Tratamento Químico" icon="flask-outline" placeholder="Convencional..." value={tratamentoConvencional} onChange={setTratamentoConvencional} multiline />
+          {/* --- NOVO SELETOR DE ESTADO --- */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelRow}>
+              <MaterialCommunityIcons name="Shield-star-outline" size={18} color={ACTIVE_GREEN} />
+              <Text style={[styles.label, { color: isDarkMode ? '#AAA' : '#555' }]}>Estado da Planta</Text>
+            </View>
+            <TouchableOpacity 
+              style={[styles.inputWrapper, styles.selectTrigger, { backgroundColor: isDarkMode ? '#1A1D19' : '#FFF', borderColor: isDarkMode ? '#333' : '#E0EEDF' }]}
+              onPress={() => setModalEstadoVisible(true)}
+            >
+              <Text style={{ color: estadoSelecionado ? currentTheme.textPrimary : '#BBB' }}>
+                {estadoSelecionado ? estadoSelecionado.name : "Saudável ou Doente?"}
+              </Text>
+              <MaterialCommunityIcons name="chevron-down" size={20} color={ACTIVE_GREEN} />
+            </TouchableOpacity>
+          </View>
+
+          <InputField label="Label da IA (Chave única)" icon="robot-outline" placeholder="Ex: Tomate__Ferrugem_Precoce" value={labelIA} onChange={setLabelIA} />
+          <InputField label="Descrição" icon="text-search" placeholder="Sintomas ou estado geral..." value={descricao} onChange={setDescricao} multiline />
+          <InputField label="Prevenção / Cuidados" icon="shield-check-outline" placeholder="Como evitar ou manter..." value={prevencao} onChange={setPrevencao} multiline />
+          <InputField label="Tratamento Caseiro / Dica" icon="leaf" placeholder="Alternativa orgânica..." value={tratamentoCaseiro} onChange={setTratamentoCaseiro} multiline />
+          <InputField label="Tratamento Convencional" icon="flask-outline" placeholder="Produtos químicos..." value={tratamentoConvencional} onChange={setTratamentoConvencional} multiline />
 
           <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-            <Text style={styles.saveBtnText}>Salvar Doença</Text>
+            <Text style={styles.saveBtnText}>Salvar Registro</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <Modal 
-  visible={modalCulturaVisible} 
-  transparent 
-  animationType="slide" 
-  onRequestClose={() => setModalCulturaVisible(false)}
->
-  <View style={styles.modalOverlay}>
-    <View style={[styles.modalContent, { backgroundColor: isDarkMode ? '#1A1D19' : '#FFF' }]}>
-      <Text style={[styles.modalTitle, { color: currentTheme.textPrimary }]}>
-        Selecione a Cultura
-      </Text>
-      
-      {/* Ajustamos a altura para ~275. 
-        Como cada item + padding tem cerca de 55-60px, 
-        isso mostrará 4 itens inteiros e o 5º ou 6º pela metade.
-      */}
-      <View style={styles.listContainer}> 
-        <FlatList
-          data={listaCulturas}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={true} // Ativa a barra lateral para dar a dica
-          renderItem={({ item }) => {
-            const isSelected = culturaSelecionada?.id === item.id;
-            return (
-              <TouchableOpacity 
-                style={[
-                  styles.modalOption, 
-                  isSelected && { backgroundColor: isDarkMode ? '#1A2E1A' : '#E8F5E9', borderRadius: 10 }
-                ]} 
-                onPress={() => { setCulturaSelecionada(item); setModalCulturaVisible(false); }}
-              >
-                <Text style={[
-                  styles.modalOptionText, 
-                  { color: currentTheme.textPrimary },
-                  isSelected && { color: ACTIVE_GREEN, fontWeight: 'bold' }
-                ]}>
-                  {item.name}
-                </Text>
-                {isSelected ? <MaterialCommunityIcons name="check" size={20} color={ACTIVE_GREEN} /> : null}
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View>
+      {/* MODAL CULTURA (Mantido) */}
+      <Modal visible={modalCulturaVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: isDarkMode ? '#1A1D19' : '#FFF' }]}>
+            <Text style={[styles.modalTitle, { color: currentTheme.textPrimary }]}>Selecione a Cultura</Text>
+            <View style={styles.listContainer}> 
+              <FlatList
+                data={listaCulturas}
+                keyExtractor={item => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity 
+                    style={[styles.modalOption, culturaSelecionada?.id === item.id && { backgroundColor: isDarkMode ? '#1A2E1A' : '#E8F5E9' }]} 
+                    onPress={() => { setCulturaSelecionada(item); setModalCulturaVisible(false); }}
+                  >
+                    <Text style={[styles.modalOptionText, { color: currentTheme.textPrimary }, culturaSelecionada?.id === item.id && { color: ACTIVE_GREEN, fontWeight: 'bold' }]}>
+                      {item.name}
+                    </Text>
+                    {culturaSelecionada?.id === item.id && <MaterialCommunityIcons name="check" size={20} color={ACTIVE_GREEN} />}
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+            <TouchableOpacity style={styles.closeModal} onPress={() => setModalCulturaVisible(false)}>
+              <Text style={styles.closeModalText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
-      <TouchableOpacity style={styles.closeModal} onPress={() => setModalCulturaVisible(false)}>
-        <Text style={styles.closeModalText}>Cancelar</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
+      {/* --- NOVO MODAL ESTADO --- */}
+      <Modal visible={modalEstadoVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: isDarkMode ? '#1A1D19' : '#FFF' }]}>
+            <Text style={[styles.modalTitle, { color: currentTheme.textPrimary }]}>Estado da Planta</Text>
+            <View style={{ marginBottom: 10 }}> 
+              {listaEstados.map((item) => (
+                <TouchableOpacity 
+                  key={item.id}
+                  style={[styles.modalOption, estadoSelecionado?.id === item.id && { backgroundColor: isDarkMode ? '#1A2E1A' : '#E8F5E9' }]} 
+                  onPress={() => { setEstadoSelecionado(item); setModalEstadoVisible(false); }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <MaterialCommunityIcons name={item.icon} size={22} color={item.id === 'saudavel' ? '#4CAF50' : '#F44336'} />
+                    <Text style={[styles.modalOptionText, { color: currentTheme.textPrimary }, estadoSelecionado?.id === item.id && { color: ACTIVE_GREEN, fontWeight: 'bold' }]}>
+                      {item.name}
+                    </Text>
+                  </View>
+                  {estadoSelecionado?.id === item.id && <MaterialCommunityIcons name="check" size={20} color={ACTIVE_GREEN} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.closeModal} onPress={() => setModalEstadoVisible(false)}>
+              <Text style={styles.closeModalText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
-
+// ... (mantenha os estilos que você já tem no arquivo)
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 40, marginTop: 12 },

@@ -1,0 +1,16 @@
+# Node.js
+node_modules/
+.expo/
+dist/
+
+# Python
+ia_service/venv/
+__pycache__/
+*.pyc
+
+# Dados Pesados
+ia_service/dataset/
+backend/uploads/
+ia_service/train/dataset/
+# Ambiente
+.env

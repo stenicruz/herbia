@@ -1,0 +1,58 @@
+config:
+  target: 'http://192.168.0.6:3333'
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Aquecimento — 5 utilizadores/s"
+    - duration: 60
+      arrivalRate: 15
+      name: "Carga normal — 15 utilizadores/s"
+    - duration: 30
+      arrivalRate: 30
+      name: "Pico — 30 utilizadores/s"
+
+scenarios:
+  - name: "Login"
+    weight: 60
+    flow:
+      - post:
+          url: "/login"
+          json:
+            email: "hemiltonbernardo@gmail.com"
+            senha: "000000"
+
+  - name: "Análise de Planta"
+    weight: 40
+    flow:
+      - post:
+          url: "/login"
+          json:
+            email: "hemiltonbernardo@gmail.com"
+            senha: "000000"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - post:
+          url: "/analisar"
+          headers:
+            authorization: "{{ token }}"
+          formData:
+            planta:
+              file: "./foto.jpg"
+              contentType: "image/jpeg"
+
+  - name: "Histórico"
+    weight: 30
+    flow:
+      - post:
+          url: "/login"
+          json:
+            email: "hemiltonbernardo@gmail.com"
+            senha: "000000"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - get:
+          url: "/analisar"
+          headers:
+            authorization: "{{ token }}"
