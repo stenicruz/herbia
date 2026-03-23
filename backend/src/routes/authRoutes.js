@@ -1,5 +1,5 @@
 import express from 'express';
-import * as authController from '../controllers/authcontroller.js';
+import * as authController from '../controllers/authController.js';
 import { auth } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -23,7 +23,7 @@ router.post('/redefinir-senha', authController.redefinirSenha);
 router.post('/login-google', authController.loginGoogle);
 
 // --- Rotas Privadas (Precisam do middleware 'auth') ---
-
+router.post('/verificar-senha', auth, authController.verificarSenha);
 // Buscar dados do próprio perfil (usado para refresh no App)
 // Nota: o ':id' é validado dentro do controller para garantir que o user só vê o seu próprio ID
 router.get('/usuarios/:id', auth, authController.buscarPerfil);

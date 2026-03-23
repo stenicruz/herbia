@@ -75,7 +75,9 @@ export default function EditProfileScreen({ navigation }) {
       
       try {
         setSaving(true);
-        const response = await userService.atualizarFoto(user.id, image.uri, image.fileName, image.mimeType);
+        const fileName = image.fileName || `foto_${user.id}_${Date.now()}.jpg`;
+        const mimeType = image.mimeType || 'image/jpeg';
+        const response = await userService.atualizarFoto(user.id, image.uri, fileName, mimeType);
         
         // Atualiza o user localmente para refletir a nova foto
         const updatedUser = { ...user, foto_perfil: response.foto_url };
@@ -162,7 +164,7 @@ const handleSave = async () => {
     }
 
   } catch (error) {
-    console.error("Erro ao salvar perfil:", error);
+    console.warn("Erro ao salvar perfil:", error);
     
     // Captura a mensagem específica vinda do Back-end (Ex: "Senha atual incorreta")
     const msgErro = error.response?.data?.error || error.message || "Ocorreu um erro ao salvar as alterações.";

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -25,6 +25,8 @@ export default function VerifyCode({ navigation, route }) {
   const [code, setCode] = useState(['', '', '', '','','']); // Estado para o código
   const [loading, setLoading] = useState(false);
 
+  const { email, type } = route.params || { email: '', type: 'register' };
+
   const handleResend = async () => {
   try {
     setLoading(true);
@@ -43,8 +45,6 @@ export default function VerifyCode({ navigation, route }) {
 
   const { isDarkMode } = useTheme();
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
-
-  const { email, type } = route.params || { email: '', type: 'register' };
 
   const focusNext = (index, value) => {
   const newCode = [...code];

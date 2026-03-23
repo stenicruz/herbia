@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
   View, 
   Text, 
@@ -29,20 +28,14 @@ export default function Decision({ navigation }) {
       // 1. Removemos os dados de login para garantir que o estado seja 'null'
       await AsyncStorage.removeItem('@Herbia:token');
       await AsyncStorage.removeItem('@Herbia:user');
-      
-      // Opcional: Se quiser limpar TUDO (cuidado se tiver preferências de tema/idioma)
-      // await AsyncStorage.clear(); 
 
       console.log("Sessão de convidado iniciada (dados antigos limpos)");
 
       // 2. Navega para a Home
-      navigation.reset({
-      index: 0,
-      routes: [{ name: 'Main' }],
-    }); 
+      navigation.reset({ index: 0, routes: [{ name: 'Main' }] }); 
     } catch (error) {
       console.error("Erro ao limpar sessão:", error);
-      navigation.navigate('MainTabs');
+      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     }
   };
 

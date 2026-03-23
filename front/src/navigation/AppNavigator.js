@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import authService from '../services/authService';
+import { setNavigationRef } from '../services/api';
 
 // IMPORTAÇÃO QUE FALTA:
 import { BottomTabBar } from '../components/central.js'; 
@@ -96,7 +97,7 @@ useEffect(() => {
 
       if (token && userData) {
         const user = JSON.parse(userData);
-        setUserType(user.tipo_usuario); // 'admin' ou 'comum' (ajusta conforme o teu banco)
+        setUserType(user.role); // 'admin' ou 'comum' (ajusta conforme o teu banco)
       }
     } catch (e) {
       console.error(e);
@@ -114,62 +115,56 @@ useEffect(() => {
   if (isLoading) return <MySplash />;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isFirstTime ? (
-        <Stack.Screen name="Onboarding">
-          {(props) => <Onboarding {...props} onFinish={completeOnboarding} />}
-        </Stack.Screen>
-      ) : (
-        <Stack.Group>
-          {/* LÓGICA DE REDIRECIONAMENTO AUTOMÁTICO */}
-          {userType === 'admin' ? (
-            <Stack.Screen name="AdminMain" component={AdminTabs} />
-          ) : userType === 'comum' ? (
-            <Stack.Screen name="Main" component={MainTabs} />
-          ) : (
-            <Stack.Screen name="AccessMode" component={AccessMode} />
-          )}
-          {/* Restante das telas que podem ser chamadas via navigation.navigate */}
-          <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="Register" component={Register} />
-          <Stack.Screen 
-            name="CameraScanner" 
-            component={CameraScanner} 
-            options={{
-              headerShown: false,
-              animationEnabled: true, // Mantemos a animação, mas mudamos o tipo
-              gestureEnabled: false,
-              cardStyle: { backgroundColor: '#000' },
-              cardStyleInterpolator: ({ current }) => ({
-                cardStyle: {
-                  opacity: current.progress, // Isso cria um efeito de FADE (mais leve que o deslize)
-                },
-              }),
-            }}
-          />
-          <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen name="AdminMain" component={AdminTabs} />
-          <Stack.Screen name="ShowCulture" component={ShowCulture} />
-          <Stack.Screen name="DiagnosticResult" component={DiagnosticResult} />
-          <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
-          <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-          <Stack.Screen name="VerifyCode" component={VerifyCode} />
-          <Stack.Screen name="ResetPassword" component={ResetPassword} />
-          <Stack.Screen name="Success" component={Success} />
-          <Stack.Screen name="ConfirmPhoto" component={ConfirmPhoto} />
-          <Stack.Screen name="Support" component={Support} />
-          <Stack.Screen name="EditProfile" component={EditProfile} />
-          <Stack.Screen name="PhotoSupport" component={PhotoSupport} />
-          <Stack.Screen name="DiagnosticSupport" component={DiagnosticSupport} />
-          <Stack.Screen name="AllAnalyses" component={AllAnalyses} />
-          <Stack.Screen name="UserDetails" component={UserDetails} />
-          <Stack.Screen name="AdminTips" component={AdminTips} />
-          <Stack.Screen name="CultureManager" component={CultureManager} />
-          <Stack.Screen name="DiseaseManager" component={DiseaseManager} />
-          <Stack.Screen name="EditDisease" component={EditDisease} />
-        </Stack.Group>
-      )}
-    </Stack.Navigator>
-  );
+  <Stack.Navigator 
+    screenOptions={{ headerShown: false }}
+    initialRouteName={
+      isFirstTime ? 'Onboarding' 
+      : userType === 'admin' ? 'AdminMain' 
+      : userType === 'usuario' ? 'Main' 
+      : 'AccessMode'
+    }
+  >
+    <Stack.Screen name="Onboarding">
+      {(props) => <Onboarding {...props} onFinish={completeOnboarding} />}
+    </Stack.Screen>
+
+    {/* ✅ Todas as telas registadas uma única vez */}
+    <Stack.Screen name="AccessMode" component={AccessMode} />
+    <Stack.Screen name="Main" component={MainTabs} />
+    <Stack.Screen name="AdminMain" component={AdminTabs} />
+    <Stack.Screen name="Login" component={Login} />
+    <Stack.Screen name="Register" component={Register} />
+    <Stack.Screen name="CameraScanner" component={CameraScanner}
+      options={{
+        headerShown: false,
+        animationEnabled: true,
+        gestureEnabled: false,
+        cardStyle: { backgroundColor: '#000' },
+        cardStyleInterpolator: ({ current }) => ({
+          cardStyle: { opacity: current.progress },
+        }),
+      }}
+    />
+    <Stack.Screen name="ShowCulture" component={ShowCulture} />
+    <Stack.Screen name="DiagnosticResult" component={DiagnosticResult} />
+    <Stack.Screen name="TermsOfUse" component={TermsOfUse} />
+    <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicy} />
+    <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+    <Stack.Screen name="VerifyCode" component={VerifyCode} />
+    <Stack.Screen name="ResetPassword" component={ResetPassword} />
+    <Stack.Screen name="Success" component={Success} />
+    <Stack.Screen name="ConfirmPhoto" component={ConfirmPhoto} />
+    <Stack.Screen name="Support" component={Support} />
+    <Stack.Screen name="EditProfile" component={EditProfile} />
+    <Stack.Screen name="PhotoSupport" component={PhotoSupport} />
+    <Stack.Screen name="DiagnosticSupport" component={DiagnosticSupport} />
+    <Stack.Screen name="AllAnalyses" component={AllAnalyses} />
+    <Stack.Screen name="UserDetails" component={UserDetails} />
+    <Stack.Screen name="AdminTips" component={AdminTips} />
+    <Stack.Screen name="CultureManager" component={CultureManager} />
+    <Stack.Screen name="DiseaseManager" component={DiseaseManager} />
+    <Stack.Screen name="EditDisease" component={EditDisease} />
+    <Stack.Screen name="PhotoConfirmation" component={PhotoConfirmation} />
+  </Stack.Navigator>
+);
 }

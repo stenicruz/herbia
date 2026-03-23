@@ -18,7 +18,12 @@ const authService = {
         await AsyncStorage.setItem('@Herbia:token', response.data.token);
         
         // Guardamos também os dados básicos do utilizador (nome, tipo, etc)
-        await AsyncStorage.setItem('@Herbia:user', JSON.stringify(response.data.user));
+        const userData = {
+          ...response.data.user,
+          auth_provider: 'local',
+          tem_senha: 1,
+        };
+        await AsyncStorage.setItem('@Herbia:user', JSON.stringify(userData));
       }
 
       return response.data; // Retorna { token, user } para o ecrã usar
@@ -28,12 +33,26 @@ const authService = {
     }
   },
 
+  verificarSenha: async (senha) => {
+  try {
+    const response = await api.post('/auth/verificar-senha', { senha });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { error: 'Senha incorreta' };
+  }
+  },
+
   loginGoogle: async (googleToken) => {
   try {
     const response = await api.post('/auth/login-google', { token: googleToken });
     if (response.data.token) {
       await AsyncStorage.setItem('@Herbia:token', response.data.token);
-      await AsyncStorage.setItem('@Herbia:user', JSON.stringify(response.data.user));
+      const userData = {
+        ...response.data.user,
+        auth_provider: 'google',
+        tem_senha: 0,
+      };
+      await AsyncStorage.setItem('@Herbia:user', JSON.stringify(userData));
     }
     return response.data;
   } catch (error) {

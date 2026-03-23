@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, Platform, Image, Switch, Modal, StatusBar, TextInput, KeyboardAvoidingView
+  StyleSheet, View, Text, TouchableOpacity, ScrollView, Platform, Image, Switch, Modal, StatusBar, TextInput, KeyboardAvoidingView, Alert
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,47 +33,56 @@ export default function ProfileScreen({ route }) {
 
   // Validar a senha no Back-end
   const handleVerifyPassword = async () => {
-    // Se for Google, pula a senha e vai direto para a confirmação final
-    if (user?.isGoogle) {
-      setPasswordModalVisible(false);
-      setDeleteAccountModalVisible(true);
-      return; // <--- ESSENCIAL: Para parar a execução aqui
-    }
+  if (!password) {
+    Alert.alert("Atenção", "Por favor, digite sua senha.");
+    return;
+  }
 
-    if (!password) {
-      alert("Por favor, digite sua senha.");
-      return;
-    }
-    
+  try {
+    setLoading(true);
+    await authService.verificarSenha(password); // ✅ só passa a senha, não o email
+
     setPasswordModalVisible(false);
     setDeleteAccountModalVisible(true);
-  };
+
+  } catch (err) {
+    Alert.alert("Erro", err.error || "Senha incorreta. Tente novamente.");
+    setPassword('');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Exclusão Real
-  const confirmDeleteAccount = async () => {
-    try {
-      setLoading(true);
-      
-      // Chamada ao seu userService
-      await userService.deleteConta(user.id, password);
-
-      setDeleteAccountModalVisible(false);
-      setPassword(''); // Limpa a senha
-      
-      alert("Conta excluída com sucesso. Sentiremos sua falta!");
-
-      // Reset para a tela de acesso
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'AccessMode' }],
-      });
-    } catch (error) {
-      console.error(error);
-      alert(error.message || "Senha incorreta ou erro ao excluir conta.");
-    } finally {
-      setLoading(false);
-    }
-  };
+const confirmDeleteAccount = async () => {
+  try {
+    setLoading(true);
+    await userService.deleteConta(user.id, password);
+    
+    // ✅ Limpa os dados locais após apagar a conta
+    await authService.logout();
+    
+    setDeleteAccountModalVisible(false);
+    setPassword('');
+    
+    Alert.alert(
+      "Conta excluída", 
+      "Sentiremos a sua falta!",
+      [{ 
+        text: "OK", 
+        onPress: () => navigation.reset({ 
+          index: 0, 
+          routes: [{ name: 'AccessMode' }] 
+        })
+      }]
+    );
+  } catch (error) {
+    setDeleteAccountModalVisible(false);
+    Alert.alert("Erro", error.message || "Erro ao excluir conta.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Carregar dados ao entrar na tela
   useFocusEffect(
@@ -82,18 +91,35 @@ export default function ProfileScreen({ route }) {
   }, [])
 );
 
-  const loadUserData = async () => {
-    try {
-      const storedUser = await AsyncStorage.getItem('@Herbia:user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+const loadUserData = async () => {
+  try {
+    const storedUser = await AsyncStorage.getItem('@Herbia:user');
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      setUser(parsed);
+
+      // ✅ Busca tem_senha actualizado do backend
+      // O userService.getPerfil chama GET /usuarios/:id que devolve tem_senha real
+      try {
+        const perfilActualizado = await userService.getPerfil(parsed.id);
+        const userActualizado = { 
+          ...parsed, 
+          tem_senha: perfilActualizado.tem_senha 
+        };
+        // Actualiza o AsyncStorage com o valor correcto
+        await AsyncStorage.setItem('@Herbia:user', JSON.stringify(userActualizado));
+        setUser(userActualizado);
+      } catch (e) {
+        // Se falhar (ex: sem internet), usa o valor local
+        console.warn("Não foi possível actualizar tem_senha:", e);
       }
-    } catch (e) {
-      console.error("Erro ao carregar dados do usuário", e);
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (e) {
+    console.warn("Erro ao carregar dados do usuário", e);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const isGuest = !user;
   const isAdmin = user?.role === 'admin';
@@ -227,10 +253,10 @@ export default function ProfileScreen({ route }) {
           <TouchableOpacity 
               style={[styles.menuItem, { backgroundColor: isDarkMode ? '#1A1212' : '#FFF', borderColor: isDarkMode ? '#3D2222' : '#ffebeb' }]} 
               onPress={() => {
-                if (user?.isGoogle) {
-                  setDeleteAccountModalVisible(true); // Direto para o aviso final
+                if (user?.auth_provider === 'google' && Number(user?.tem_senha) === 0) {
+                  setDeleteAccountModalVisible(true);
                 } else {
-                  setPasswordModalVisible(true); // Pede senha primeiro
+                  setPasswordModalVisible(true);
                 }
               }}
             >
@@ -329,6 +355,7 @@ export default function ProfileScreen({ route }) {
         confirmText="Sair Agora"
         onConfirm={handleLogout}
         onClose={() => setLogoutModalVisible(false)}
+        loading={loading}
       />
       {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO ============ Aplicar Lógica de exclusão de conta*/}
       <ConfirmationModal 
@@ -340,6 +367,7 @@ export default function ProfileScreen({ route }) {
         onConfirm={confirmDeleteAccount}
         onClose={() => setDeleteAccountModalVisible(false)}
         variant="danger"
+        loading={loading}
       />
     </SafeAreaView>
   );

@@ -1,23 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
-import Routes from './src/navigation/AppNavigator.js'; 
-
-// REMOVEMOS: SplashScreen.preventAutoHideAsync();
-// Isso faz a Splash nativa sumir imediatamente.
+import { setNavigationRef } from './src/services/api';
+import Routes from './src/navigation/AppNavigator.js';
 
 function Root() {
   const { loading, isDarkMode } = useTheme();
+  const navigationRef = useRef(null);
 
-  // Se o tema ainda estiver carregando do disco, mostramos um fundo
-  // da cor do tema do sistema para não dar o flash branco.
   if (loading) {
     return (
       <View style={{ 
         flex: 1, 
-        backgroundColor: isDarkMode ? '#121411' : '#FFF', // Cor de fundo dinâmica
+        backgroundColor: isDarkMode ? '#121411' : '#FFF',
         justifyContent: 'center', 
         alignItems: 'center' 
       }}>
@@ -27,7 +24,13 @@ function Root() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        setNavigationRef(navigationRef.current);
+        console.log("✅ Navigator pronto!"); // log temporário para confirmar
+      }}
+    >
       <Routes />
     </NavigationContainer>
   );

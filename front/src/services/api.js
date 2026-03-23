@@ -1,49 +1,117 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
-// 1. Configuração Base
 const api = axios.create({
-  // USA O IP QUE APARECEU NO TEU TERMINAL (Importante: manter o /api no final)
   baseURL: 'http://192.168.0.104:3333/api',
-  timeout: 45000, // 45 segundos (Damos tempo extra para a IA processar a imagem)
+  timeout: 45000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
 });
 
-// 2. Interceptor de Requisição (Envia o Token automaticamente)
-// Antes de cada pedido sair da App, este código verifica se temos um token guardado
+// Interceptor de Requisição — envia o token automaticamente
 api.interceptors.request.use(
   async (config) => {
     try {
       const token = await AsyncStorage.getItem('@Herbia:token');
       if (token) {
-        // Adiciona o token no formato Bearer exigido pelo middleware 'auth'
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (error) {
-      console.error("Erro ao carregar token do AsyncStorage", error);
+      console.error("Erro ao carregar token", error);
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// 3. Interceptor de Resposta (Tratamento de Erros Global)
-// Se o servidor responder 401 (Token expirado), podemos deslogar o user automaticamente
+// Referência à navegação — será injectada pelo AppNavigator
+let navigationRef = null;
+export const setNavigationRef = (ref) => {
+  navigationRef = ref;
+};
+
+// Interceptor de Resposta — trata sessão expirada globalmente
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response && error.response.status === 401) {
-      // Opcional: Limpar dados se o token for inválido
+    const originalRequest = error.config;
+
+    // LOG TEMPORÁRIO — apaga depois de resolver
+    console.log('❌ Erro interceptado:');
+    console.log('Status:', error.response?.status);
+    console.log('URL:', originalRequest?.url);
+    console.log('isRotaSenha:', originalRequest?.url?.includes('/senha'));
+
+    const isRotaSenha = originalRequest?.url?.includes('/senha');
+
+    if (error.response?.status === 401 && !isRotaExcluida) {
       await AsyncStorage.multiRemove(['@Herbia:token', '@Herbia:user']);
-      console.warn("Sessão expirada ou não autorizada.");
+
+      // Pequeno delay para garantir que o navigator está pronto
+      setTimeout(() => {
+        Alert.alert(
+          "Sessão Expirada",
+          "A sua sessão expirou. Por favor, faça login novamente.",
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                if (navigationRef) {
+                  navigationRef.reset({
+                    index: 0,
+                    routes: [{ name: 'AccessMode' }],
+                  });
+                } else {
+                  console.warn("navigationRef não está pronto");
+                }
+              }
+            }
+          ]
+        );
+      }, 100);
+
     }
+
     return Promise.reject(error);
   }
 );
+/*api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
+    // Rotas onde 401 significa "senha errada", não "sessão expirada"
+    const isRotaSenha = originalRequest?.url?.includes('/senha');
+
+    if (error.response?.status === 401 && !isRotaSenha) {
+      // 1. Limpa os dados locais
+      await AsyncStorage.multiRemove(['@Herbia:token', '@Herbia:user']);
+
+      // 2. Avisa o utilizador e redireciona
+      Alert.alert(
+        "Sessão Expirada",
+        "A sua sessão expirou. Por favor, faça login novamente.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              if (navigationRef) {
+                navigationRef.reset({
+                  index: 0,
+                  routes: [{ name: 'AccessMode' }],
+                });
+              }
+            }
+          }
+        ]
+      );
+    }
+
+    return Promise.reject(error);
+  }
+);
+*/
 export default api;

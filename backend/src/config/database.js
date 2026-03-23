@@ -2,20 +2,24 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import path from 'path';
 
+// ✅ Conexão única partilhada — evita SQLITE_BUSY
+let dbInstance = null;
+
 async function setupDb() {
-    const db = await open({
+    if (dbInstance) return dbInstance; // Reutiliza a conexão existente
+
+    dbInstance = await open({
         filename: path.resolve('herbiadb.sqlite'),
         driver: sqlite3.Database
     });
 
-    await db.exec(`PRAGMA foreign_keys = ON;`);
+    await dbInstance.exec(`PRAGMA foreign_keys = ON;`);
+    await dbInstance.exec(`PRAGMA journal_mode = WAL;`);
+    await dbInstance.exec(`PRAGMA busy_timeout = 5000;`);
+    await dbInstance.exec(`PRAGMA synchronous = NORMAL;`);
+    await dbInstance.exec(`PRAGMA cache_size = 1000;`);
 
-      // Configurações para aguentar mais conexões simultâneas
-    await db.exec(`PRAGMA journal_mode = WAL;`);      // ← permite leituras simultâneas
-    await db.exec(`PRAGMA busy_timeout = 5000;`);     // ← espera 5s antes de dar erro
-    await db.exec(`PRAGMA synchronous = NORMAL;`);    // ← menos writes ao disco
-    await db.exec(`PRAGMA cache_size = 1000;`);       // ← cache em memória
-    await db.exec(`
+    await dbInstance.exec(`
         CREATE TABLE IF NOT EXISTS usuarios (
             id               INTEGER PRIMARY KEY AUTOINCREMENT,
             nome             TEXT NOT NULL,
@@ -61,7 +65,7 @@ async function setupDb() {
             tratamento_caseiro      TEXT,
             tratamento_convencional TEXT,
             criado_em               DATETIME DEFAULT CURRENT_TIMESTAMP,
-            criado_por  INTEGER,
+            criado_por              INTEGER,
             FOREIGN KEY (cultura_id) REFERENCES culturas(id) ON DELETE CASCADE,
             FOREIGN KEY (criado_por) REFERENCES usuarios(id) ON DELETE SET NULL
         );
@@ -92,9 +96,11 @@ async function setupDb() {
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
         );
     `);
-    const tableCheck = await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='usuarios'");
+
+    const tableCheck = await dbInstance.get("SELECT name FROM sqlite_master WHERE type='table' AND name='usuarios'");
     console.log(tableCheck ? "✅ Tabela 'usuarios' pronta!" : "❌ Tabela 'usuarios' NÃO ENCONTRADA!");
-    return db;
+    
+    return dbInstance;
 }
 
 export default setupDb;

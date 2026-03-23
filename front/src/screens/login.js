@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -97,7 +97,7 @@ const handleGoogleLogin = async () => {
       const data = await authService.login(email, senha);
 
       // 3. Redirecionamento baseado no tipo de usuário real do Banco de Dados
-      const routeName = data.user.tipo_usuario === 'admin' ? 'AdminMain' : 'Main';
+      const routeName = data.user.role === 'admin' ? 'AdminMain' : 'Main';
 
       navigation.reset({
         index: 0,

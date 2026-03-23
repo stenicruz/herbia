@@ -182,8 +182,9 @@ console.log("----------------------------");
     });
 
   } catch (error) {
-    console.error("Erro no Google Login:", error);
-    res.status(500).json({ error: "Erro ao processar Google Login" });
+    console.error("Erro no Google Login:", error.message);
+  console.error("Stack:", error.stack);
+  res.status(500).json({ error: error.message || "Erro ao processar Google Login" });
   }
 };
 
@@ -319,5 +320,30 @@ export const buscarPerfil = async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: 'Erro interno no servidor' });
+  }
+};
+
+// --- VERIFICAR SENHA ACTUAL ---
+export const verificarSenha = async (req, res) => {
+  const { senha } = req.body;
+  const db = await setupDb();
+
+  try {
+    const user = await db.get('SELECT senha FROM usuarios WHERE id = ?', [req.usuario_id]);
+
+    if (!user || !user.senha) {
+      return res.status(400).json({ error: 'Esta conta não tem senha definida.' });
+    }
+
+    const senhaCorreta = await bcrypt.compare(senha, user.senha);
+
+    if (!senhaCorreta) {
+      // ✅ 400 em vez de 401 — não confunde com sessão expirada
+      return res.status(400).json({ error: 'Senha incorreta.' });
+    }
+
+    res.json({ sucesso: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao verificar senha.' });
   }
 };

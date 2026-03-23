@@ -82,7 +82,7 @@ export const alterarSenha = async (req, res) => {
     if (user.senha) {
       const senhaCorreta = await bcrypt.compare(senhaAtual, user.senha);
       if (!senhaCorreta) {
-        return res.status(401).json({ error: 'Senha atual incorreta.' });
+        return res.status(400).json({ error: 'Senha atual incorreta.' });
       }
     } 
     // Se NÃO TEM senha (usuário Google), ele pode simplesmente definir a nova.
