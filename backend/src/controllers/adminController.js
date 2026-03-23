@@ -90,42 +90,6 @@ export const obterHistoricoPorUsuario = async (req, res) => {
     }
 };
 
-// --- RESTANTES FUNÇÕES (DICAS, CULTURAS, DOENÇAS) ---
-// (As tuas funções de criarDica, editarDica, eliminarDica, gerirUsuarios, 
-// criarNovoAdmin, criarCultura e criarDoenca estão corretas, 
-// apenas certifica-te que a imagem_url da cultura também leva o HOST/PORT na resposta se necessário)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export const eliminarAnalise = async (req, res) => {
     const { id } = req.params;
     try {
@@ -135,6 +99,16 @@ export const eliminarAnalise = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: 'Erro ao eliminar análise' });
     }
+};
+
+export const listarDicas = async (req, res) => {
+  try {
+    const db = await setupDb();
+    const dicas = await db.all('SELECT * FROM dicas ORDER BY criado_em DESC');
+    res.json(dicas);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao carregar dicas' });
+  }
 };
 
 export const criarDica = async (req, res) => {
@@ -259,6 +233,21 @@ export const eliminarCultura = async (req, res) => {
     }
 };
 
+// Listar as Culturas
+export const listarCulturas = async (req, res) => {
+  try {
+    const db = await setupDb();
+    const culturas = await db.all('SELECT * FROM culturas ORDER BY nome ASC');
+    const formatadas = culturas.map(c => ({
+      ...c,
+      imagem_url: c.imagem_url ? `http://${HOST}:${PORT}${c.imagem_url}` : ''
+    }));
+    res.json(formatadas);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao carregar culturas' });
+  }
+};
+
 // Criar Doença (Ligada à cultura)
 export const criarDoenca = async (req, res) => {
     const { cultura_id, classe_ia, nome, estado, descricao, prevencao, tratamento_caseiro, tratamento_convencional } = req.body;
@@ -273,6 +262,22 @@ export const criarDoenca = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: 'Erro ao registrar doença' });
     }
+};
+
+//Listar doenças
+export const listarDoencas = async (req, res) => {
+  try {
+    const db = await setupDb();
+    const doencas = await db.all(`
+      SELECT d.*, c.nome as cultura_nome 
+      FROM doencas d
+      JOIN culturas c ON d.cultura_id = c.id
+      ORDER BY c.nome ASC, d.nome ASC
+    `);
+    res.json(doencas);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao carregar doenças' });
+  }
 };
 
 // Editar Doença

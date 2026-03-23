@@ -78,6 +78,15 @@ const adminService = {
     }
   },
 
+  listarDicas: async () => {
+    try {
+      const response = await api.get('/admin/dicas');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Erro ao carregar dicas' };
+    }
+  },
+
   // Culturas
   criarCultura: async (nome, imagemUri) => {
     try {
@@ -108,24 +117,71 @@ const adminService = {
     }
   },
 
-  // Doenças
-  criarDoenca: async (dados) => {
-    try {
-      const response = await api.post('/admin/doencas', dados);
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { error: 'Erro ao criar doença' };
-    }
-  },
+  listarCulturas: async () => {
+  try {
+    const response = await api.get('/admin/culturas');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { error: 'Erro ao carregar culturas' };
+  }
+},
 
-  eliminarDoenca: async (id) => {
-    try {
-      await api.delete(`/admin/doencas/${id}`);
-      return { sucesso: true };
-    } catch (error) {
-      throw error.response?.data || { error: 'Erro ao eliminar doença' };
+editarCultura: async (id, nome, imagemUri) => {
+  try {
+    const formData = new FormData();
+    formData.append('nome', nome);
+    if (imagemUri) {
+      formData.append('imagem', {
+        uri: imagemUri,
+        name: `cultura_${Date.now()}.jpg`,
+        type: 'image/jpeg',
+      });
     }
-  },
+    const response = await api.put(`/admin/culturas/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { error: 'Erro ao editar cultura' };
+  }
+},
+
+  // Doenças
+  listarDoencas: async () => {
+  try {
+    const response = await api.get('/admin/doencas');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { error: 'Erro ao carregar doenças' };
+  }
+},
+
+criarDoenca: async (dados) => {
+  try {
+    const response = await api.post('/admin/doencas', dados);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { error: 'Erro ao criar doença' };
+  }
+},
+
+editarDoenca: async (id, dados) => {
+  try {
+    const response = await api.put(`/admin/doencas/${id}`, dados);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { error: 'Erro ao editar doença' };
+  }
+},
+
+eliminarDoenca: async (id) => {
+  try {
+    await api.delete(`/admin/doencas/${id}`);
+    return { sucesso: true };
+  } catch (error) {
+    throw error.response?.data || { error: 'Erro ao eliminar doença' };
+  }
+},
 };
 
 export default adminService;

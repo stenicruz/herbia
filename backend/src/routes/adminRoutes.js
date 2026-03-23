@@ -19,17 +19,20 @@ router.get('/historico', auth, verificarAdmin, adminController.listarHistoricoGl
 router.delete('/historico/:id', auth, verificarAdmin, adminController.eliminarAnalise);
 
 // --- GESTÃO DE DICAS (HOME DO USER) ---
+router.get('/dicas', auth, verificarAdmin, adminController.listarDicas);
 router.post('/dicas', auth, verificarAdmin, adminController.criarDica);
 router.put('/dicas/:id', auth, verificarAdmin, adminController.editarDica);
 router.delete('/dicas/:id', auth, verificarAdmin, adminController.eliminarDica);
 
 // --- CATÁLOGO AGRÍCOLA (CULTURAS) ---
 // Usamos o middleware uploadCultura para lidar com a imagem da planta
+router.get('/culturas', auth, verificarAdmin, adminController.listarCulturas);
 router.post('/culturas', auth, verificarAdmin, uploadCultura.single('imagem'), adminController.criarCultura);
 router.put('/culturas/:id', auth, verificarAdmin, uploadCultura.single('imagem'), adminController.editarCultura);
 router.delete('/culturas/:id', auth, verificarAdmin, adminController.eliminarCultura);
 
 // --- GESTÃO DE DOENÇAS ---
+router.get('/doencas', auth, verificarAdmin, adminController.listarDoencas);
 router.post('/doencas', auth, verificarAdmin, adminController.criarDoenca);
 router.put('/doencas/:id', auth, verificarAdmin, adminController.editarDoenca);
 router.delete('/doencas/:id', auth, verificarAdmin, adminController.eliminarDoenca);
