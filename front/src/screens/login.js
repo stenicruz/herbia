@@ -121,7 +121,7 @@ const handleGoogleLogin = async () => {
       // 2. Chamada ao serviço (usa o IP configurado no api.js)
       const data = await authService.login(email, senha);
 
-      await verificarAnalisePendente(response.user);
+      await verificarAnalisePendente(data.user);
 
       // 3. Redirecionamento baseado no tipo de usuário real do Banco de Dados
       const routeName = data.user.role === 'admin' ? 'AdminMain' : 'Main';

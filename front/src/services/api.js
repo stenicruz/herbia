@@ -83,7 +83,10 @@ api.interceptors.response.use(
 
     const isRotaExcluida =
       originalRequest?.url?.includes('/senha') ||
-      originalRequest?.url?.includes('/auth/verificar-senha');
+      originalRequest?.url?.includes('/auth/verificar-senha') ||
+      originalRequest?.url?.includes('/auth/login') ||
+      originalRequest?.url?.includes('/auth/registrar') ||
+      originalRequest?.url?.includes('/auth/login-google');
 
     // Sessão expirada
     if (error.response?.status === 401 && !isRotaExcluida) {
