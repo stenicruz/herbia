@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Mail, Lock } from 'lucide-react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { CustomInput, PrimaryButton } from '../components/central.js';
@@ -24,6 +24,7 @@ import {
   GoogleSignin, 
   statusCodes
 } from '@react-native-google-signin/google-signin';
+import plantService from '../services/plantService';
 
 const { height } = Dimensions.get('window');
 
@@ -44,6 +45,28 @@ export default function Login({ navigation }) {
     });
   }, []);
 
+const verificarAnalisePendente = async (user) => {
+  try {
+    const pendenteRaw = await AsyncStorage.getItem('@Herbia:analise_pendente');
+    
+    if (pendenteRaw) {
+      // ✅ SÓ GUARDA SE FOR UTILIZADOR COMUM
+      if (user && user.role !== 'admin') {
+        const dados = JSON.parse(pendenteRaw);
+        await plantService.salvarAnalisePendente(dados);
+        console.log("LOG: Análise pendente guardada para o utilizador.");
+      } else {
+        console.log("LOG: Login de Admin detetado. Ignorando análise pendente.");
+      }
+      
+      // ✅ LIMPA SEMPRE (Seja admin ou user) para não acumular lixo no storage
+      await AsyncStorage.removeItem('@Herbia:analise_pendente');
+    }
+  } catch (error) {
+    console.error("Erro ao processar análise pendente:", error);
+  }
+};
+
 const handleGoogleLogin = async () => {
   try {
     setLoading(true);
@@ -62,6 +85,8 @@ const handleGoogleLogin = async () => {
 
     const response = await authService.loginGoogle(idToken);
     
+    await verificarAnalisePendente(response.user);
+
     navigation.reset({
       index: 0,
       routes: [{ name: response.user.role === 'admin' ? 'AdminMain' : 'Main' }], // Verifique se usa response.user.role
@@ -95,6 +120,8 @@ const handleGoogleLogin = async () => {
     try {
       // 2. Chamada ao serviço (usa o IP configurado no api.js)
       const data = await authService.login(email, senha);
+
+      await verificarAnalisePendente(response.user);
 
       // 3. Redirecionamento baseado no tipo de usuário real do Banco de Dados
       const routeName = data.user.role === 'admin' ? 'AdminMain' : 'Main';

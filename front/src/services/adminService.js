@@ -12,6 +12,25 @@ const adminService = {
     }
   },
 
+  atualizarStatusUsuario: async (id, novoStatus) => {
+    try {
+      // Rota que aponta para o seu controller de update de usuário
+      const response = await api.put(`/admin/usuarios/${id}/status`, { ativo: novoStatus });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Erro ao alterar status' };
+    }
+  },
+
+  eliminarUsuario: async (id) => {
+    try {
+      const response = await api.delete(`/admin/usuarios/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Erro ao eliminar usuário' };
+    }
+  },
+
   // Histórico global com filtros
   listarHistoricoGlobal: async (filtros = {}) => {
     try {
@@ -38,6 +57,15 @@ const adminService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { error: 'Erro ao listar utilizadores' };
+    }
+  },
+
+  obterHistoricoPorUsuario: async (userId) => {
+    try {
+      const response = await api.get(`/admin/usuarios/${userId}/historico`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: 'Erro ao carregar histórico' };
     }
   },
 

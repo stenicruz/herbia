@@ -32,7 +32,7 @@ export default function HomeScreen({ navigation }) {
     }, [])
   );
 
-  const INTERVALO_HORAS = 0.11;
+  const INTERVALO_HORAS = 0.125;
 
 const loadDica = async () => {
   try {
@@ -109,7 +109,7 @@ const loadDica = async () => {
             {loadingDica ? (
               <ActivityIndicator color="#FFF" size="small" style={{ marginTop: 6 }} />
             ) : (
-              <Text style={styles.cardSubtitle} numberOfLines={3}>
+              <Text style={styles.cardSubtitle}>
                 {dica ? dica.conteudo : 'Sem dicas disponíveis de momento.'}
               </Text>
             )}
@@ -185,7 +185,7 @@ const loadDica = async () => {
 const styles = StyleSheet.create({
   safeContainer: { flex: 1 },
   cardVerde: {
-    marginHorizontal: 20, borderRadius: 22, padding: 22, height: 115,
+    marginHorizontal: 20, borderRadius: 22, padding: 22, paddingVertical:15,
     flexDirection: 'row', overflow: 'hidden', position: 'relative', marginTop: 15,
     elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10,
   },

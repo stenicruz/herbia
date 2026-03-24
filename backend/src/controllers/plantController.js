@@ -8,7 +8,10 @@ export const analisarPlanta = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Imagem obrigatória' });
 
   const filePath = req.file.path;
-  const token = req.headers.authorization;
+  let token = req.headers.authorization;
+  if (token && token.startsWith('Bearer ')) {
+    token = token.slice(7, token.length);
+  }
   const db = await setupDb();
 
   try {
@@ -61,6 +64,8 @@ export const analisarPlanta = async (req, res) => {
             imagemUrl, classe_id
           ]
         );
+      }else {
+        console.log("Sessão não encontrada para o token fornecido.");
       }
     }
 

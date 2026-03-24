@@ -13,6 +13,8 @@ router.get('/home', auth, verificarAdmin, adminController.obterEstatisticasHome)
 router.get('/usuarios', auth, verificarAdmin, adminController.gerirUsuarios);
 router.post('/usuarios/admin', auth, verificarAdmin, adminController.criarNovoAdmin);
 router.get('/usuarios/:id/historico', auth, verificarAdmin, adminController.obterHistoricoPorUsuario);
+router.put('/usuarios/:id/status', auth, verificarAdmin, adminController.atualizarStatusUsuario);
+router.delete('/usuarios/:id', auth, verificarAdmin, adminController.eliminarUsuario);
 
 // --- GESTÃO DO HISTÓRICO GLOBAL (FILTROS) ---
 router.get('/historico', auth, verificarAdmin, adminController.listarHistoricoGlobal);

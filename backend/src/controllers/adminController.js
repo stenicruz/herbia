@@ -149,7 +149,7 @@ export const eliminarDica = async (req, res) => {
 
 export const gerirUsuarios = async (req, res) => {
     const { busca, filtro } = req.query; // filtro: 'ativos', 'inativos', 'admins', 'usuario'
-    let query = `SELECT id, nome, email, tipo_usuario, ativo FROM usuarios WHERE 1=1`;
+    let query = `SELECT id, nome, email, tipo_usuario, ativo, foto_perfil, criado_em FROM usuarios WHERE 1=1`;
     const params = [];
 
     if (busca) { 
@@ -173,18 +173,44 @@ export const criarNovoAdmin = async (req, res) => {
     const { nome, email, senha } = req.body;
     try {
         const db = await setupDb();
-        const hash = await bcrypt.hash(senha, 10);
-        await db.run(`
-            INSERT INTO usuarios (nome, email, senha, tipo_usuario, email_verificado, ativo) 
-            VALUES (?, ?, ?, 'admin', 1, 1)`, 
-            [nome, email, hash]
+        const senhaHash = await bcrypt.hash(senha, 10);
+        
+        await db.run(
+            `INSERT INTO usuarios (nome, email, senha, tipo_usuario, ativo, email_verificado) 
+             VALUES (?, ?, ?, 'admin', 1, 1)`, // Note os dois '1' no final
+            [nome, email, senhaHash]
         );
-        res.status(201).json({ sucesso: true });
+        res.json({ sucesso: true });
     } catch (err) {
-        res.status(400).json({ error: 'E-mail já em uso ou dados inválidos.' });
+        res.status(500).json({ error: 'Erro ao criar administrador' });
     }
 };
 
+// Atualizar status (Ativar/Desativar)
+export const atualizarStatusUsuario = async (req, res) => {
+    const { id } = req.params;
+    const { ativo } = req.body; // espera 1 ou 0
+    try {
+        const db = await setupDb();
+        await db.run('UPDATE usuarios SET ativo = ? WHERE id = ?', [ativo, id]);
+        res.json({ sucesso: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao atualizar status' });
+    }
+};
+
+// Eliminar usuário
+export const eliminarUsuario = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const db = await setupDb();
+        // CUIDADO: Isso pode falhar se o usuário tiver histórico (Foreign Key)
+        await db.run('DELETE FROM usuarios WHERE id = ?', [id]);
+        res.json({ sucesso: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Não é possível deletar: usuário possui registros vinculados.' });
+    }
+};
 
 // Criar Cultura
 export const criarCultura = async (req, res) => {
@@ -284,18 +310,20 @@ export const listarDoencas = async (req, res) => {
 export const editarDoenca = async (req, res) => {
     const { id } = req.params;
     const { 
-        nome, estado, descricao, prevencao, 
-        tratamento_caseiro, tratamento_convencional 
+        cultura_id, classe_ia, nome, estado, descricao, 
+        prevencao, tratamento_caseiro, tratamento_convencional 
     } = req.body;
 
     try {
         const db = await setupDb();
         await db.run(`
             UPDATE doencas 
-            SET nome = ?, estado = ?, descricao = ?, prevencao = ?, 
+            SET cultura_id = ?, classe_ia = ?, nome = ?, estado = ?, 
+                descricao = ?, prevencao = ?, 
                 tratamento_caseiro = ?, tratamento_convencional = ?
             WHERE id = ?`,
-            [nome, estado, descricao, prevencao, tratamento_caseiro, tratamento_convencional, id]
+            [cultura_id, classe_ia, nome, estado, descricao, 
+             prevencao, tratamento_caseiro, tratamento_convencional, id]
         );
         res.json({ sucesso: true });
     } catch (err) {

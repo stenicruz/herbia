@@ -2,8 +2,11 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
+// Definimos a base para facilitar a manutenção
+const BASE_SERVER = 'http://192.168.0.104:3333';
+
 const api = axios.create({
-  baseURL: 'http://192.168.0.104:3333/api',
+  baseURL: `${BASE_SERVER}/api`,
   timeout: 45000,
   headers: {
     'Content-Type': 'application/json',
@@ -27,75 +30,70 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Referência à navegação — será injectada pelo AppNavigator
+// Referência à navegação
 let navigationRef = null;
 export const setNavigationRef = (ref) => {
   navigationRef = ref;
 };
 
-// Interceptor de Resposta — trata sessão expirada globalmente
+// --- NOVO INTERCEPTOR DE RESPOSTA (TRATAMENTO DE DADOS) ---
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Função genérica para corrigir caminhos de imagem
+    const fixUrls = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+
+  // Lista de chaves que o seu backend usa
+  const imageKeys = ['imagem_url', 'foto_url', 'foto', 'avatar', 'foto_perfil'];
+
+  imageKeys.forEach(key => {
+    if (obj[key] && typeof obj[key] === 'string') {
+      // Se não começa com http e tem algo escrito, prefixamos com o servidor
+      if (!obj[key].startsWith('http')) {
+        const cleanPath = obj[key].startsWith('/') ? obj[key] : `/${obj[key]}`;
+        obj[key] = `${BASE_SERVER}${cleanPath}`;
+      }
+    }
+  });
+
+  // Percorre objetos aninhados se houver
+  Object.keys(obj).forEach(key => {
+    if (obj[key] && typeof obj[key] === 'object') fixUrls(obj[key]);
+  });
+
+  return obj;
+};
+
+    // Aplica a correção se for array ou objeto
+    if (Array.isArray(response.data)) {
+      response.data = response.data.map(item => fixUrls(item));
+    } else {
+      response.data = fixUrls(response.data);
+    }
+
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
-    // LOG TEMPORÁRIO — apaga depois de resolver
-    console.log('❌ Erro interceptado:');
-    console.log('Status:', error.response?.status);
-    console.log('URL:', originalRequest?.url);
-    console.log('isRotaSenha:', originalRequest?.url?.includes('/senha'));
+    if (!error.response) {
+      console.warn("Erro de rede:", error.message);
+      return Promise.reject(error);
+    }
 
-    const isRotaSenha = originalRequest?.url?.includes('/senha');
+    const isRotaExcluida =
+      originalRequest?.url?.includes('/senha') ||
+      originalRequest?.url?.includes('/auth/verificar-senha');
 
+    // Sessão expirada
     if (error.response?.status === 401 && !isRotaExcluida) {
       await AsyncStorage.multiRemove(['@Herbia:token', '@Herbia:user']);
 
-      // Pequeno delay para garantir que o navigator está pronto
       setTimeout(() => {
         Alert.alert(
           "Sessão Expirada",
           "A sua sessão expirou. Por favor, faça login novamente.",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                if (navigationRef) {
-                  navigationRef.reset({
-                    index: 0,
-                    routes: [{ name: 'AccessMode' }],
-                  });
-                } else {
-                  console.warn("navigationRef não está pronto");
-                }
-              }
-            }
-          ]
-        );
-      }, 100);
-
-    }
-
-    return Promise.reject(error);
-  }
-);
-/*api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // Rotas onde 401 significa "senha errada", não "sessão expirada"
-    const isRotaSenha = originalRequest?.url?.includes('/senha');
-
-    if (error.response?.status === 401 && !isRotaSenha) {
-      // 1. Limpa os dados locais
-      await AsyncStorage.multiRemove(['@Herbia:token', '@Herbia:user']);
-
-      // 2. Avisa o utilizador e redireciona
-      Alert.alert(
-        "Sessão Expirada",
-        "A sua sessão expirou. Por favor, faça login novamente.",
-        [
-          {
+          [{
             text: "OK",
             onPress: () => {
               if (navigationRef) {
@@ -105,13 +103,14 @@ api.interceptors.response.use(
                 });
               }
             }
-          }
-        ]
-      );
+          }]
+        );
+      }, 100);
     }
 
     return Promise.reject(error);
   }
 );
-*/
+
+
 export default api;

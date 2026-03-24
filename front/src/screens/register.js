@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Mail, Lock, User } from 'lucide-react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import plantService from '../services/plantService';
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { CustomInput, PrimaryButton } from '../components/central.js';
@@ -47,6 +48,28 @@ export default function Register({ navigation }) {
       });
     }, []);
 
+    const verificarAnalisePendente = async (user) => {
+  try {
+    const pendenteRaw = await AsyncStorage.getItem('@Herbia:analise_pendente');
+    
+    if (pendenteRaw) {
+      // ✅ SÓ GUARDA SE FOR UTILIZADOR COMUM
+      if (user && user.role !== 'admin') {
+        const dados = JSON.parse(pendenteRaw);
+        await plantService.salvarAnalisePendente(dados);
+        console.log("LOG: Análise pendente guardada para o utilizador.");
+      } else {
+        console.log("LOG: Login de Admin detetado. Ignorando análise pendente.");
+      }
+      
+      // ✅ LIMPA SEMPRE (Seja admin ou user) para não acumular lixo no storage
+      await AsyncStorage.removeItem('@Herbia:analise_pendente');
+    }
+  } catch (error) {
+    console.error("Erro ao processar análise pendente:", error);
+  }
+};
+
   const handleGoogleLogin = async () => {
   try {
     setLoading(true);
@@ -64,6 +87,8 @@ export default function Register({ navigation }) {
     const { idToken } = userInfo.data; 
 
     const response = await authService.loginGoogle(idToken);
+    
+    await verificarAnalisePendente(response.user);
     
     navigation.reset({
       index: 0,

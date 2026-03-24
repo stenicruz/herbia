@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, TouchableWithoutFeedback, Platform, StatusBar
+  StyleSheet, View, Text, TouchableOpacity, ScrollView, Modal, 
+  TouchableWithoutFeedback, Platform, StatusBar, ActivityIndicator, Alert, Image
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,32 +10,63 @@ import {
   ChevronDown, Trash2, Check, Calendar as CalendarIcon, X
 } from 'lucide-react-native';
 
+import plantService from '../services/plantService';
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { AppHeader, ConfirmationModal } from '../components/central.js';
-
-const HISTORICO_DATA = [
-  { id: '1', planta: 'Tomateiro', status: 'Saudável', data: '05/07/2025', corStatus: '#47e426' },
-  { id: '2', planta: 'Arroz', status: 'Oídio', data: '05/07/2025', corStatus: '#E74C3C' },
-  { id: '3', planta: 'Mandioca', status: 'Doente', data: '06/07/2025', corStatus: '#E74C3C' },
-  { id: '4', planta: 'Batata', status: 'Saudável', data: '07/07/2025', corStatus: '#47e426' },
-];
-
 export default function HistoryScreen({ navigation }) {
   const { isDarkMode } = useTheme();
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
+  // --- ESTADOS DA API ---
+  const [historico, setHistorico] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // --- ESTADOS DE FILTRO ---
+  const [menuAberto, setMenuAberto] = useState(null);
   const [filtroPlanta, setFiltroPlanta] = useState('Todas');
   const [filtroStatus, setFiltroStatus] = useState('Todos');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dataSelecionadaFormatada, setDataSelecionadaFormatada] = useState(null);
-  const [menuAberto, setMenuAberto] = useState(null);
 
-  const opcoesPlanta = ['Todas', 'Tomateiro', 'Arroz', 'Mandioca', 'Milho', 'Batata'];
-  const opcoesStatus = ['Todos', 'Saudável', 'Doente', 'Desconhecido'];
+  // --- ESTADOS DE MODAL ---
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+
+  const opcoesPlanta = ['Todas', ...new Set(historico.map(item => item.planta))].sort();
+  const opcoesStatus = ['Todos', 'Saudável', 'Doente'];
+
+  // --- CARREGAR DADOS ---
+  const carregarHistorico = async () => {
+    try {
+      setLoading(true);
+      const dados = await plantService.listarHistorico();
+      setHistorico(dados);
+    } catch (error) {
+      console.error("Erro ao carregar histórico:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarHistorico();
+    }, [])
+  );
+
+  // --- ELIMINAR REGISTRO ---
+  const handleConfirmDelete = async () => {
+    if (!selectedId) return;
+    try {
+      await plantService.deletarAnalise(selectedId);
+      setHistorico(prev => prev.filter(item => item.id !== selectedId));
+      setModalVisible(false);
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível eliminar o registro.");
+    }
+  };
 
   const formatDate = (date) => {
     const day = String(date.getDate()).padStart(2, '0');
@@ -43,24 +76,28 @@ export default function HistoryScreen({ navigation }) {
   };
 
   const onChangeDate = (event, selectedDate) => {
-    if (Platform.OS === 'android') setShowDatePicker(false);
-    if (event.type === 'set') {
-      const currentDate = selectedDate || date;
-      setDate(currentDate);
-      setDataSelecionadaFormatada(formatDate(currentDate));
-    } else {
-      setShowDatePicker(false);
+    setShowDatePicker(false);
+    if (event.type === 'set' && selectedDate) {
+      setDate(selectedDate);
+      setDataSelecionadaFormatada(formatDate(selectedDate));
     }
   };
 
-  const dadosFiltrados = HISTORICO_DATA.filter(item => {
+  // --- LÓGICA DE FILTRAGEM ---
+  const dadosFiltrados = historico.filter(item => {
     const matchPlanta = filtroPlanta === 'Todas' || item.planta === filtroPlanta;
-    const matchStatus = filtroStatus === 'Todos' || item.status === filtroStatus;
-    const matchData = !dataSelecionadaFormatada || item.data === dataSelecionadaFormatada;
+    
+    const isSaudavel = item.estado === 'Saudável';
+    const matchStatus = filtroStatus === 'Todos' || 
+                       (filtroStatus === 'Saudável' && isSaudavel) ||
+                       (filtroStatus === 'Doente' && !isSaudavel);
+    
+    const dataItem = formatDate(new Date(item.criado_em));
+    const matchData = !dataSelecionadaFormatada || dataItem === dataSelecionadaFormatada;
+    
     return matchPlanta && matchStatus && matchData;
   });
 
-  // Componente de Dropdown Flutuante Adaptado
   const RenderDropdown = ({ visivel, opcoes, selecionado, aoSelecionar, posicaoEsquerda }) => (
     <Modal visible={visivel} transparent animationType="fade">
       <TouchableWithoutFeedback onPress={() => setMenuAberto(null)}>
@@ -100,7 +137,6 @@ export default function HistoryScreen({ navigation }) {
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       <AppHeader title="Histórico" showBack={false} />
 
-      {/* Barra de Filtros */}
       <View style={styles.filterRow}>
         <TouchableOpacity 
           style={[
@@ -157,7 +193,6 @@ export default function HistoryScreen({ navigation }) {
           display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
           onChange={onChangeDate}
           maximumDate={new Date()}
-          themeVariant={isDarkMode ? 'dark' : 'light'}
         />
       )}
 
@@ -165,30 +200,47 @@ export default function HistoryScreen({ navigation }) {
       <RenderDropdown visivel={menuAberto === 'status'} opcoes={opcoesStatus} selecionado={filtroStatus} aoSelecionar={setFiltroStatus} posicaoEsquerda="51%" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130, paddingHorizontal: 20 }}>
-        {dadosFiltrados.map((item) => (
-          <TouchableOpacity 
-            key={item.id} 
-            style={[styles.historyCard, { backgroundColor: isDarkMode ? '#121411' : '#FFF', borderColor: isDarkMode ? '#222' : '#F0F0F0' }]}
-            onPress={() => navigation.navigate('DiagnosticResult', { item })}
-          >
-            <View style={styles.cardInfo}>
-              <View style={[styles.imagePlaceholder, { backgroundColor: isDarkMode ? '#1A1D19' : '#EBF5FB' }]} />
-              <View style={styles.textGroup}>
-                <Text style={[styles.plantaNome, { color: currentTheme.textPrimary }]}>{item.planta}</Text>
-                <Text style={[styles.plantaStatus, { color: item.corStatus }]}>{item.status}</Text>
-                <Text style={[styles.plantaData, { color: isDarkMode ? '#666' : '#BBB' }]}>{item.data}</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color={THEME.primary} style={{ marginTop: 50 }} />
+        ) : (
+          dadosFiltrados.map((item) => (
+            <TouchableOpacity 
+              key={item.id} 
+              style={[styles.historyCard, { backgroundColor: isDarkMode ? '#121411' : '#FFF', borderColor: isDarkMode ? '#222' : '#F0F0F0' }]}
+              onPress={() => navigation.navigate('DiagnosticResult', { resultado: item, isLoggedIn: true })}
+            >
+              <View style={styles.cardInfo}>
+                <Image 
+                  source={{ uri: item.imagem_url }} 
+                  style={[styles.imagePlaceholder, { backgroundColor: isDarkMode ? '#1A1D19' : '#EBF5FB' }]} 
+                />
+                <View style={styles.textGroup}>
+                  <Text style={[styles.plantaNome, { color: currentTheme.textPrimary }]}>{item.planta}</Text>
+                  <Text style={[
+                    styles.plantaStatus, 
+                    { color: item.estado === 'Saudável' ? '#47e426' : '#E74C3C' }
+                  ]}>
+                    {item.doenca}
+                  </Text>
+                  <Text style={[styles.plantaData, { color: isDarkMode ? '#666' : '#BBB' }]}>
+                    {formatDate(new Date(item.criado_em))}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.cardActions}>
-              <View style={[styles.divider, { backgroundColor: isDarkMode ? '#333' : '#EEE' }]} />
-              <TouchableOpacity onPress={() => { setSelectedItem(item.id); setModalVisible(true); }} style={styles.deleteBtn}>
-                <Trash2 color="#E74C3C" size={22} />
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        ))}
+              <View style={styles.cardActions}>
+                <View style={[styles.divider, { backgroundColor: isDarkMode ? '#333' : '#EEE' }]} />
+                <TouchableOpacity 
+                  onPress={() => { setSelectedId(item.id); setModalVisible(true); }} 
+                  style={styles.deleteBtn}
+                >
+                  <Trash2 color="#E74C3C" size={22} />
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
 
-        {dadosFiltrados.length === 0 && (
+        {!loading && dadosFiltrados.length === 0 && (
           <Text style={{ textAlign: 'center', color: isDarkMode ? '#444' : '#999', marginTop: 40 }}>Nenhum registro encontrado.</Text>
         )}
       </ScrollView>
@@ -196,7 +248,7 @@ export default function HistoryScreen({ navigation }) {
       <ConfirmationModal 
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        onConfirm={() => setModalVisible(false)}
+        onConfirm={handleConfirmDelete}
         title="Deseja eliminar?"
         message="Esta ação não poderá ser desfeita."
       />
@@ -206,14 +258,14 @@ export default function HistoryScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safeContainer: { flex: 1 },
-  filterRow: { flexDirection: 'row', justifyContent: 'center', gap: 48, marginBottom: 25, marginTop: 10, zIndex: 10 },
+  filterRow: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 25, marginTop: 10, zIndex: 10 },
   filterButton: { 
     flexDirection: 'row', alignItems: 'center', borderWidth: 1, 
     paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12
   },
   filterButtonAtivo: { backgroundColor: '#47e426', borderColor: '#47e426' },
   filterText: { marginRight: 4, color: '#999', fontWeight: '700', fontSize: 12 },
-
+  filterTextAtivo:{ color: '#fff'},
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.2)' },
   dropdownContainer: {
     position: 'absolute', top: 141, width: 160,

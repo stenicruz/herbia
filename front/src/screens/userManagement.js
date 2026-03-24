@@ -1,43 +1,112 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Modal, Pressable, StatusBar 
+  StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Modal, StatusBar, ActivityIndicator, Alert, Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { 
-  Search, Trash2, User as UserIcon, Mail, Lock, EyeOff, X, Eye
+  Search, Trash2, User as UserIcon, Mail, Lock, X, Eye
 } from 'lucide-react-native';
 
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { AppHeader } from '../components/central.js';
+import adminService from '../services/adminService'; // Importação do serviço
 
 export default function UserManagementScreen({navigation}) {
   const { isDarkMode } = useTheme();
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
   const ACTIVE_GREEN = THEME.primary;
 
+  // --- ESTADOS DE DADOS ---
+  const [users, setUsers] = useState([]);
+  const [stats, setStats] = useState({ total: 0, ativos: 0, inativos: 0, admins: 0 });
+  const [loading, setLoading] = useState(true);
+
+  // --- ESTADOS DE UI ---
   const [registerVisible, setRegisterVisible] = useState(false);
   const [confirmModal, setConfirmModal] = useState({ visible: false, type: '', userId: null });
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('All');
-  const [filterRole, setFilterRole] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('All'); // 'All', '1', '0'
+  const [filterRole, setFilterRole] = useState('All'); // 'All', 'admin', 'user'
 
-  const USER_DATA = [
-    { id: '1', name: 'Julian Rivers', email: 'julian@gmail.com', date: '05/08/2020', role: 'Admin', status: 'Active' },
-    { id: '2', name: 'Julian Rivers', email: 'julian@gmail.com', date: '05/08/2020', role: 'User', status: 'Inactive' },
-    { id: '3', name: 'Adriana Silva', email: 'adriana@gmail.com', date: '10/01/2021', role: 'User', status: 'Active' },
-  ];
+  // --- ESTADOS DO FORMULÁRIO ---
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
 
-  const filteredUsers = USER_DATA.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  // --- CARREGAR DADOS DO BACK-END ---
+  const carregarUsuarios = async () => {
+    try {
+      setLoading(true);
+      const data = await adminService.listarUsuarios();
+      setUsers(data);
+      
+      // Cálculo das estatísticas dinâmicas
+      setStats({
+        total: data.length,
+        ativos: data.filter(u => u.ativo === 1).length,
+        inativos: data.filter(u => u.ativo === 0).length,
+        admins: data.filter(u => u.tipo_usuario === 'admin').length
+      });
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarUsuarios();
+    }, [])
+  );
+
+  // --- LÓGICA DE FILTRAGEM ---
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.nome.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === 'All' || user.status === filterStatus;
-    const matchesRole = filterRole === 'All' || user.role === filterRole;
+    const matchesStatus = filterStatus === 'All' || 
+                          (filterStatus === 'Active' ? user.ativo === 1 : user.ativo === 0);
+    const matchesRole = filterRole === 'All' || 
+                        (filterRole === 'Admin' ? user.tipo_usuario === 'admin' : user.tipo_usuario === 'usuario');
     return matchesSearch && matchesStatus && matchesRole;
   });
+
+  // --- AÇÕES (CRIAR, STATUS, DELETAR) ---
+  const handleCreateAdmin = async () => {
+    if (senha !== confirmarSenha) {
+      Alert.alert("Erro", "As palavras-passe não coincidem.");
+      return;
+    }
+    try {
+      await adminService.criarAdmin(nome, email, senha);
+      setRegisterVisible(false);
+      setNome(''); setEmail(''); setSenha(''); setConfirmarSenha('');
+      carregarUsuarios();
+    } catch (error) {
+      Alert.alert("Erro", error.error || "Erro ao criar admin.");
+    }
+  };
+
+  const handleConfirmAction = async () => {
+  try {
+    if (confirmModal.type === 'deletar') {
+      await adminService.eliminarUsuario(confirmModal.userId);
+    } else {
+      const novoStatus = confirmModal.type === 'ativar' ? 1 : 0;
+      await adminService.atualizarStatusUsuario(confirmModal.userId, novoStatus);
+    }
+    setConfirmModal({ ...confirmModal, visible: false });
+    carregarUsuarios();
+  } catch (error) {
+    Alert.alert("Erro", error.error || "Não foi possível completar a acção.");
+  }
+};
 
   const handleAction = (type, id) => {
     setConfirmModal({ visible: true, type, userId: id });
@@ -56,15 +125,15 @@ export default function UserManagementScreen({navigation}) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]} edges={['top']}>
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
-      <AppHeader title="Gestão de Usuários" />
+      <AppHeader title="Gestão de Usuários" showBack={false} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         <View style={styles.statsRow}>
-          <StatCard label="Total" value={USER_DATA.length} />
-          <StatCard label="Activos" value={USER_DATA.filter(u => u.status === 'Active').length} />
-          <StatCard label="Inactivos" value={USER_DATA.filter(u => u.status === 'Inactive').length} />
-          <StatCard label="Admins" value={USER_DATA.filter(u => u.role === 'Admin').length} />
+          <StatCard label="Total" value={stats.total} />
+          <StatCard label="Activos" value={stats.ativos} />
+          <StatCard label="Inactivos" value={stats.inativos} />
+          <StatCard label="Admins" value={stats.admins} />
         </View>
 
         <View style={[styles.searchBar, { backgroundColor: isDarkMode ? '#121411' : '#F8F8F8' }]}>
@@ -80,40 +149,25 @@ export default function UserManagementScreen({navigation}) {
 
         <View style={styles.filterSection}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-            {/* Filtro Todos */}
-            <TouchableOpacity 
-              style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterStatus === 'All' && styles.activeChip]} 
-              onPress={() => setFilterStatus('All')}>
+            <TouchableOpacity style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterStatus === 'All' && styles.activeChip]} onPress={() => setFilterStatus('All')}>
               <Text style={[styles.filterChipText, { color: isDarkMode ? '#AAA' : '#666' }, filterStatus === 'All' && styles.activeChipText]}>Todos</Text>
             </TouchableOpacity>
 
-            {/* Filtro Ativos */}
-            <TouchableOpacity 
-              style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterStatus === 'Active' && styles.activeChip]} 
-              onPress={() => setFilterStatus('Active')}>
+            <TouchableOpacity style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterStatus === 'Active' && styles.activeChip]} onPress={() => setFilterStatus('Active')}>
               <Text style={[styles.filterChipText, { color: isDarkMode ? '#AAA' : '#666' }, filterStatus === 'Active' && styles.activeChipText]}>Ativos</Text>
             </TouchableOpacity>
 
-            {/* Filtro Inativos - CORRIGIDO AQUI */}
-            <TouchableOpacity 
-              style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterStatus === 'Inactive' && styles.activeChip]} 
-              onPress={() => setFilterStatus('Inactive')}>
+            <TouchableOpacity style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterStatus === 'Inactive' && styles.activeChip]} onPress={() => setFilterStatus('Inactive')}>
               <Text style={[styles.filterChipText, { color: isDarkMode ? '#AAA' : '#666' }, filterStatus === 'Inactive' && styles.activeChipText]}>Inativos</Text>
             </TouchableOpacity>
 
             <View style={[styles.filterDivider, { backgroundColor: isDarkMode ? '#333' : '#EEE' }]} />
 
-            {/* Filtro Admins */}
-            <TouchableOpacity 
-              style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterRole === 'Admin' && styles.activeChip]} 
-              onPress={() => setFilterRole(filterRole === 'Admin' ? 'All' : 'Admin')}>
+            <TouchableOpacity style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterRole === 'Admin' && styles.activeChip]} onPress={() => setFilterRole(filterRole === 'Admin' ? 'All' : 'Admin')}>
               <Text style={[styles.filterChipText, { color: isDarkMode ? '#AAA' : '#666' }, filterRole === 'Admin' && styles.activeChipText]}>Admins</Text>
             </TouchableOpacity>
 
-            {/* Filtro Usuários */}
-            <TouchableOpacity 
-              style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterRole === 'User' && styles.activeChip]} 
-              onPress={() => setFilterRole(filterRole === 'User' ? 'All' : 'User')}>
+            <TouchableOpacity style={[styles.filterChip, { backgroundColor: isDarkMode ? '#121411' : '#F0F0F0' }, filterRole === 'User' && styles.activeChip]} onPress={() => setFilterRole(filterRole === 'User' ? 'All' : 'User')}>
               <Text style={[styles.filterChipText, { color: isDarkMode ? '#AAA' : '#666' }, filterRole === 'User' && styles.activeChipText]}>Usuários</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -123,39 +177,52 @@ export default function UserManagementScreen({navigation}) {
           <Text style={styles.createBtnText}>Criar Administrador</Text>
         </TouchableOpacity>
 
-        {filteredUsers.map((user) => (
-          <View key={user.id} style={[styles.userCard, { 
-            backgroundColor: isDarkMode ? '#121411' : '#FFF', 
-            borderColor: isDarkMode ? '#1A2E1A' : '#F5F5F5' 
-          }]}>
-            <View style={styles.userHeader}>
-              <View style={[styles.avatarPlaceholder, { backgroundColor: isDarkMode ? '#1A1D19' : '#E1F2FF' }]} />
-              <View style={styles.userInfo}>
-                <View style={styles.nameRoleRow}>
-                  <Text style={[styles.userName, { color: currentTheme.textPrimary }]}>{user.name}</Text>
-                  <View style={[styles.roleBadge, { backgroundColor: user.role === 'Admin' ? (isDarkMode ? '#1A2E1A' : '#B8FFAD') : (isDarkMode ? '#222' : '#EEE') }]}>
-                    <Text style={[styles.roleText, { color: user.role === 'Admin' ? ACTIVE_GREEN : (isDarkMode ? '#AAA' : '#333') }]}>{user.role}</Text>
+        {loading ? (
+          <ActivityIndicator color={ACTIVE_GREEN} />
+        ) : (
+          filteredUsers.map((user) => (
+            <View key={user.id} style={[styles.userCard, { 
+              backgroundColor: isDarkMode ? '#121411' : '#FFF', 
+              borderColor: isDarkMode ? '#1A2E1A' : '#F5F5F5' 
+            }]}>
+              <View style={styles.userHeader}>
+                <View style={styles.avatarPlaceholder}>
+                {user.foto_perfil ? (
+                  <Image 
+                    source={{ uri: user.foto_perfil }} 
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                ) : (
+                  <UserIcon color={isDarkMode ? "#333" : "#A1C9FF"} size={28} />
+                )}
+              </View>
+                <View style={styles.userInfo}>
+                  <View style={styles.nameRoleRow}>
+                    <Text style={[styles.userName, { color: currentTheme.textPrimary }]}>{user.nome}</Text>
+                    <View style={[styles.roleBadge, { backgroundColor: user.tipo_usuario === 'admin' ? (isDarkMode ? '#1A2E1A' : '#B8FFAD') : (isDarkMode ? '#222' : '#EEE') }]}>
+                      <Text style={[styles.roleText, { color: user.tipo_usuario === 'admin' ? ACTIVE_GREEN : (isDarkMode ? '#AAA' : '#333') }]}>{user.tipo_usuario}</Text>
+                    </View>
                   </View>
-                </View>
-                <Text style={[styles.userEmail, { color: isDarkMode ? '#777' : '#999' }]}>{user.email}</Text>
-                <Text style={[styles.userDate, { color: isDarkMode ? '#555' : '#BBB' }]}>Desde: {user.date}</Text>
-              </View>              
-            </View>
+                  <Text style={[styles.userEmail, { color: isDarkMode ? '#777' : '#999' }]}>{user.email}</Text>
+                  <Text style={[styles.userDate, { color: isDarkMode ? '#555' : '#BBB' }]}>Desde: {new Date(user.criado_em).toLocaleDateString()}</Text>
+                </View>               
+              </View>
 
-            <View style={styles.actionRow}>
-              <TouchableOpacity 
-                style={[styles.statusBtn, { backgroundColor: user.status === 'Active' ? ACTIVE_GREEN : (isDarkMode ? '#333' : '#BBB') }]}
-                onPress={() => handleAction(user.status === 'Active' ? 'desativar' : 'ativar', user.id)}
-              >
-                <Text style={styles.btnText}>{user.status === 'Active' ? 'Desactivar' : 'Activar'}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.visualizeBtn, { backgroundColor: isDarkMode ? '#1A2E1A' : '#B8FFAD' }]} onPress={() => navigation.navigate('UserDetails')}>
-                <Text style={[styles.btnTextGreen, { color: isDarkMode ? ACTIVE_GREEN : '#333' }]}>Visualizar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.deleteBtn} onPress={() => handleAction('deletar', user.id)}><Trash2 color="#FFF" size={18} /></TouchableOpacity>
+              <View style={styles.actionRow}>
+                <TouchableOpacity 
+                  style={[styles.statusBtn, { backgroundColor: user.ativo === 1 ? ACTIVE_GREEN : (isDarkMode ? '#333' : '#BBB') }]}
+                  onPress={() => handleAction(user.ativo === 1 ? 'desativar' : 'ativar', user.id)}
+                >
+                  <Text style={styles.btnText}>{user.ativo === 1 ? 'Desactivar' : 'Activar'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.visualizeBtn, { backgroundColor: isDarkMode ? '#1A2E1A' : '#B8FFAD' }]} onPress={() => navigation.navigate('UserDetails', { userId: user.id })}>
+                  <Text style={[styles.btnTextGreen, { color: isDarkMode ? ACTIVE_GREEN : '#333' }]}>Visualizar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleAction('deletar', user.id)}><Trash2 color="#FFF" size={18} /></TouchableOpacity>
+              </View>
             </View>
-          </View>
-        ))}
+          ))
+        )}
       </ScrollView>
 
       {/* --- MODAL CADASTRAR ADM --- */}
@@ -168,45 +235,45 @@ export default function UserManagementScreen({navigation}) {
             <Text style={[styles.modalHeaderTitle, { color: currentTheme.textPrimary }]}>Cadastrar ADM</Text>
             
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 20}}>
-              {/* Nome e Email dinâmicos */}
-              {[
-                { label: 'Nome Completo', icon: <UserIcon color="#555" size={20} />, placeholder: 'Nome do Administrador' },
-                { label: 'E-mail', icon: <Mail color="#555" size={20} />, placeholder: 'email@exemplo.com' }
-              ].map((input, index) => (
-                <View key={index} style={styles.modalInputGroup}>
-                  <Text style={[styles.modalLabel, { color: isDarkMode ? '#AAA' : '#666' }]}>{input.label}</Text>
-                  <View style={[styles.modalInputWrapper, { borderColor: isDarkMode ? '#333' : '#EEE', backgroundColor: isDarkMode ? '#121411' : '#FFF' }]}>
-                    {input.icon}
-                    <TextInput placeholder={input.placeholder} placeholderTextColor="#555" style={[styles.modalInput, { color: currentTheme.textPrimary }]} />
-                  </View>
+              <View style={styles.modalInputGroup}>
+                <Text style={[styles.modalLabel, { color: isDarkMode ? '#AAA' : '#666' }]}>Nome Completo</Text>
+                <View style={[styles.modalInputWrapper, { borderColor: isDarkMode ? '#333' : '#EEE', backgroundColor: isDarkMode ? '#121411' : '#FFF' }]}>
+                  <UserIcon color="#555" size={20} />
+                  <TextInput value={nome} onChangeText={setNome} placeholder="Nome do Administrador" placeholderTextColor="#555" style={[styles.modalInput, { color: currentTheme.textPrimary }]} />
                 </View>
-              ))}
+              </View>
 
-              {/* Senha */}
+              <View style={styles.modalInputGroup}>
+                <Text style={[styles.modalLabel, { color: isDarkMode ? '#AAA' : '#666' }]}>E-mail</Text>
+                <View style={[styles.modalInputWrapper, { borderColor: isDarkMode ? '#333' : '#EEE', backgroundColor: isDarkMode ? '#121411' : '#FFF' }]}>
+                  <Mail color="#555" size={20} />
+                  <TextInput value={email} onChangeText={setEmail} placeholder="email@exemplo.com" placeholderTextColor="#555" style={[styles.modalInput, { color: currentTheme.textPrimary }]} />
+                </View>
+              </View>
+
               <View style={styles.modalInputGroup}>
                 <Text style={[styles.modalLabel, { color: isDarkMode ? '#AAA' : '#666' }]}>Palavra-Passe</Text>
                 <View style={[styles.modalInputWrapper, { borderColor: isDarkMode ? '#333' : '#EEE', backgroundColor: isDarkMode ? '#121411' : '#FFF' }]}>
                   <Lock color="#555" size={20} />
-                  <TextInput secureTextEntry={!showPass} placeholder=".........." placeholderTextColor="#555" style={[styles.modalInput, { color: currentTheme.textPrimary }]} />
+                  <TextInput value={senha} onChangeText={setSenha} secureTextEntry={!showPass} placeholder=".........." placeholderTextColor="#555" style={[styles.modalInput, { color: currentTheme.textPrimary }]} />
                   <TouchableOpacity onPress={() => setShowPass(!showPass)}>
                     <Eye color={showPass ? ACTIVE_GREEN : "#555"} size={20} />
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {/* Confirmar Senha - ADICIONADO */}
               <View style={styles.modalInputGroup}>
                 <Text style={[styles.modalLabel, { color: isDarkMode ? '#AAA' : '#666' }]}>Confirmar Palavra-Passe</Text>
                 <View style={[styles.modalInputWrapper, { borderColor: isDarkMode ? '#333' : '#EEE', backgroundColor: isDarkMode ? '#121411' : '#FFF' }]}>
                   <Lock color="#555" size={20} />
-                  <TextInput secureTextEntry={!showConfirmPass} placeholder=".........." placeholderTextColor="#555" style={[styles.modalInput, { color: currentTheme.textPrimary }]} />
+                  <TextInput value={confirmarSenha} onChangeText={setConfirmarSenha} secureTextEntry={!showConfirmPass} placeholder=".........." placeholderTextColor="#555" style={[styles.modalInput, { color: currentTheme.textPrimary }]} />
                   <TouchableOpacity onPress={() => setShowConfirmPass(!showConfirmPass)}>
                     <Eye color={showConfirmPass ? ACTIVE_GREEN : "#555"} size={20} />
                   </TouchableOpacity>
                 </View>
               </View>
 
-              <TouchableOpacity style={[styles.modalSubmitBtn, { backgroundColor: ACTIVE_GREEN }]} onPress={() => setRegisterVisible(false)}>
+              <TouchableOpacity style={[styles.modalSubmitBtn, { backgroundColor: ACTIVE_GREEN }]} onPress={handleCreateAdmin}>
                 <Text style={styles.modalSubmitText}>Cadastrar</Text>
               </TouchableOpacity>
             </ScrollView>
@@ -220,17 +287,17 @@ export default function UserManagementScreen({navigation}) {
           <View style={[styles.confirmBox, { backgroundColor: isDarkMode ? '#1A1D19' : '#FFF' }]}>
             <Text style={[styles.confirmTitle, { color: currentTheme.textPrimary }]}>Confirmar Acção</Text>
             <Text style={[styles.confirmText, { color: isDarkMode ? '#AAA' : '#666' }]}>Deseja {confirmModal.type} este usuário?</Text>
-            <View style={styles.confirmActions}>
+            <View  style={styles.confirmActions}>
               <TouchableOpacity style={styles.cancelActionBtn} onPress={() => setConfirmModal({ ...confirmModal, visible: false })}>
                 <Text style={styles.cancelText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.confirmActionBtn, { backgroundColor: confirmModal.type === 'deletar' ? '#db2626' : ACTIVE_GREEN }]} 
-                onPress={() => setConfirmModal({ ...confirmModal, visible: false })}
+                onPress={handleConfirmAction}
               >
                 <Text style={styles.confirmBtnText}>Confirmar</Text>
               </TouchableOpacity>
-            </View>
+            </View >
           </View>
         </View>
       </Modal>
@@ -238,6 +305,7 @@ export default function UserManagementScreen({navigation}) {
   );
 }
 
+// OS ESTILOS PERMANECEM EXATAMENTE OS MESMOS QUE VOCÊ ENVIOU
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
@@ -250,7 +318,7 @@ const styles = StyleSheet.create({
   filterSection: { marginBottom: 20 },
   filterScroll: { gap: 10, paddingRight: 20 },
   filterChip: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12 },
-  activeChip: { backgroundColor: '#47e426' }, // Verde sólido quando ativo
+  activeChip: { backgroundColor: '#47e426' }, 
   filterChipText: { fontSize: 13, fontWeight: '600' },
   activeChipText: { color: '#FFF', fontWeight: '800' },
   filterDivider: { width: 1, height: 20, marginHorizontal: 5, alignSelf: 'center' },
@@ -258,7 +326,14 @@ const styles = StyleSheet.create({
   createBtnText: { color: '#FFF', fontWeight: '800', fontSize: 16 },
   userCard: { borderRadius: 22, padding: 18, marginBottom: 16, borderWidth: 1, elevation: 1 },
   userHeader: { flexDirection: 'row', marginBottom: 18 },
-  avatarPlaceholder: { width: 55, height: 55, borderRadius: 18 },
+  avatarPlaceholder: { 
+  width: 55, 
+  height: 55, 
+  borderRadius: 18,
+  overflow: 'hidden', // Importante para a imagem respeitar o arredondamento
+  justifyContent: 'center',
+  alignItems: 'center'
+},
   userInfo: { marginLeft: 15, flex: 1 },
   nameRoleRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   userName: { fontSize: 16, fontWeight: '800' },

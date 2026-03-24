@@ -13,6 +13,8 @@ import geralRoutes from './src/routes/geralRoutes.js';
 
 const app = express();
 const PORT = 3333;
+//USAR ESSE HOST CASO ESTEJA NOUTRA REDE QUE NÃO A DE CASA
+//const HOST = '192.168.0.104';
 const HOST = '192.168.0.104';
 
 app.use(cors());
