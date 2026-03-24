@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: { width: 65, height: 65, borderRadius: 14 },
   textGroup: { marginLeft: 15 },
   plantaNome: { fontSize: 17, fontWeight: '800' },
-  plantaStatus: { fontSize: 14, fontWeight: '700', marginVertical: 3 },
+  plantaStatus: { fontSize: 14, fontWeight: '700', marginVertical: 3, width: '99%' },
   plantaData: { fontSize: 12 },
   cardActions: { flexDirection: 'row', alignItems: 'center' },
   divider: { width: 1, height: '60%', marginHorizontal: 12 },

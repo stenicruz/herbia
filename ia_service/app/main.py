@@ -114,7 +114,7 @@ CLASSES = [
 ]
 
 # Threshold de confiança
-CONFIDENCE_THRESHOLD = 0.60
+CONFIDENCE_THRESHOLD = 0.30
 
 
 def extrair_planta(classe):

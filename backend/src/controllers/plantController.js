@@ -33,7 +33,7 @@ export const analisarPlanta = async (req, res) => {
       SELECT d.*, c.nome as planta_nome 
       FROM doencas d
       JOIN culturas c ON d.cultura_id = c.id
-      WHERE d.classe_ia = ?`, 
+      WHERE TRIM(d.classe_ia) = ?`, 
       [classe_id]
     );
 

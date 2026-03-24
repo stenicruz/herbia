@@ -9,11 +9,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Share2, Trash2, Eye, EyeOff, ChevronDown, Check, Calendar as CalendarIcon, X
 } from 'lucide-react-native';
-
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { AppHeader, ConfirmationModal } from '../components/central.js';
 import adminService from '../services/adminService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function UserDetailsScreen({ navigation, route }) {
   const { isDarkMode } = useTheme();
@@ -26,6 +26,7 @@ export default function UserDetailsScreen({ navigation, route }) {
   const [user, setUser] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [modalConfig, setModalConfig] = useState({ visible: false, type: '', targetId: null, title: '', message: '' });
   const [filtroPlanta, setFiltroPlanta] = useState('Todas');
@@ -35,26 +36,45 @@ export default function UserDetailsScreen({ navigation, route }) {
   const [date, setDate] = useState(new Date());
   const [dataSelecionadaFormatada, setDataSelecionadaFormatada] = useState(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [usuarios, historico] = await Promise.all([
-        adminService.listarUsuarios(),
-        adminService.obterHistoricoPorUsuario(userId),
-      ]);
-      const userEncontrado = usuarios.find(u => u.id === userId);
-      setUser(userEncontrado);
-      setHistory(historico);
-    } catch (err) {
-      Alert.alert("Erro", "Não foi possível carregar os dados.");
-    } finally {
-      setLoading(false);
+// 1. Unifique os UseEffects e corrija o nome da função
+useEffect(() => {
+  const inicializarTela = async () => {
+    // Carrega o admin logado
+    const userStorage = await AsyncStorage.getItem('@Herbia:user');
+    if (userStorage) {
+      setCurrentUser(JSON.parse(userStorage));
     }
+    // Carrega os dados do usuário da página
+    await loadData(); 
   };
+
+  inicializarTela();
+}, [userId]);
+
+// 2. Garanta que a função se chama loadData (como você já tinha em baixo)
+const loadData = async () => {
+  try {
+    setLoading(true);
+    // Busca os dados em paralelo para ser mais rápido
+    const [usuarios, historico] = await Promise.all([
+      adminService.listarUsuarios(),
+      adminService.obterHistoricoPorUsuario(userId),
+    ]);
+
+    // Encontra o usuário específico na lista retornada pelo adminService
+    const userEncontrado = usuarios.find(u => String(u.id) === String(userId));
+    
+    setUser(userEncontrado);
+    setHistory(historico);
+  } catch (err) {
+    console.error(err);
+    Alert.alert("Erro", "Não foi possível carregar os dados.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   // Opções dinâmicas baseadas no histórico real
   const plantasUnicas = ['Todas', ...new Set(history.map(h => h.planta).filter(Boolean))];
@@ -209,6 +229,7 @@ export default function UserDetailsScreen({ navigation, route }) {
         </View>
 
         {/* Botões de Acção */}
+        {currentUser?.id !== userId && (
         <View style={styles.actionButtonsRow}>
           <TouchableOpacity
             style={[styles.actionBtn, user?.ativo === 1
@@ -234,6 +255,7 @@ export default function UserDetailsScreen({ navigation, route }) {
             <Text style={[styles.actionBtnText, { color: '#db2626' }]}>Eliminar</Text>
           </TouchableOpacity>
         </View>
+        )}
 
         {/* Histórico */}
         <View style={styles.historySection}>

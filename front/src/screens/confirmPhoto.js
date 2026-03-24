@@ -33,7 +33,7 @@ const handleStartDiagnosis = async () => {
 
     // Caso 2: Baixa confiança (provavelmente não é uma planta)
     // → mostra modal de erro
-    if (resultado.precisao < 70) {
+    if (resultado.precisao < 20) {
       setShowErrorModal(true);
       return;
     }

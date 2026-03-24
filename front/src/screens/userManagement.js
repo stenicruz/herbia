@@ -7,11 +7,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { 
   Search, Trash2, User as UserIcon, Mail, Lock, X, Eye
 } from 'lucide-react-native';
-
 import { THEME } from '../styles/Theme';
 import { useTheme } from '../context/ThemeContext';
 import { AppHeader } from '../components/central.js';
 import adminService from '../services/adminService'; // Importação do serviço
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function UserManagementScreen({navigation}) {
   const { isDarkMode } = useTheme();
@@ -22,6 +22,7 @@ export default function UserManagementScreen({navigation}) {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState({ total: 0, ativos: 0, inativos: 0, admins: 0 });
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // --- ESTADOS DE UI ---
   const [registerVisible, setRegisterVisible] = useState(false);
@@ -53,6 +54,11 @@ export default function UserManagementScreen({navigation}) {
         inativos: data.filter(u => u.ativo === 0).length,
         admins: data.filter(u => u.tipo_usuario === 'admin').length
       });
+
+      const userStorage = await AsyncStorage.getItem('@Herbia:user');
+        if (userStorage) {
+          setCurrentUser(JSON.parse(userStorage));
+        }
     } catch (error) {
       console.error("Erro ao carregar usuários:", error);
     } finally {
@@ -209,17 +215,36 @@ export default function UserManagementScreen({navigation}) {
               </View>
 
               <View style={styles.actionRow}>
+              {/* SÓ MOSTRA O BOTÃO DE STATUS SE NÃO FOR O PRÓPRIO ADMIN */}
+              {currentUser?.id !== user.id && (
                 <TouchableOpacity 
                   style={[styles.statusBtn, { backgroundColor: user.ativo === 1 ? ACTIVE_GREEN : (isDarkMode ? '#333' : '#BBB') }]}
                   onPress={() => handleAction(user.ativo === 1 ? 'desativar' : 'ativar', user.id)}
                 >
                   <Text style={styles.btnText}>{user.ativo === 1 ? 'Desactivar' : 'Activar'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.visualizeBtn, { backgroundColor: isDarkMode ? '#1A2E1A' : '#B8FFAD' }]} onPress={() => navigation.navigate('UserDetails', { userId: user.id })}>
-                  <Text style={[styles.btnTextGreen, { color: isDarkMode ? ACTIVE_GREEN : '#333' }]}>Visualizar</Text>
+              )}
+
+              {/* O BOTÃO VISUALIZAR APARECE PARA TODOS */}
+              <TouchableOpacity 
+                style={[styles.visualizeBtn, { backgroundColor: isDarkMode ? '#1A2E1A' : '#B8FFAD', flex: currentUser?.id === user.id ? 1 : undefined }]} 
+                onPress={() => navigation.navigate('UserDetails', { userId: user.id })}
+              >
+                <Text style={[styles.btnTextGreen, { color: isDarkMode ? ACTIVE_GREEN : '#333' }]}>
+                  {currentUser?.id === user.id ? 'Ver meu perfil' : 'Visualizar'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* SÓ MOSTRA O BOTÃO DE ELIMINAR SE NÃO FOR O PRÓPRIO ADMIN */}
+              {currentUser?.id !== user.id && (
+                <TouchableOpacity 
+                  style={styles.deleteBtn} 
+                  onPress={() => handleAction('deletar', user.id)}
+                >
+                  <Trash2 color="#FFF" size={18} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteBtn} onPress={() => handleAction('deletar', user.id)}><Trash2 color="#FFF" size={18} /></TouchableOpacity>
-              </View>
+              )}
+            </View>
             </View>
           ))
         )}
@@ -308,7 +333,7 @@ export default function UserManagementScreen({navigation}) {
 // OS ESTILOS PERMANECEM EXATAMENTE OS MESMOS QUE VOCÊ ENVIOU
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 150 },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, marginTop: 20 },
   statCard: { width: '23%', paddingVertical: 12, alignItems: 'center', borderRadius: 15, borderWidth: 1 },
   statValue: { fontSize: 18, fontWeight: '800' },
@@ -343,7 +368,7 @@ const styles = StyleSheet.create({
   userDate: { fontSize: 11, marginTop: 4 },
   actionRow: { flexDirection: 'row', gap: 10 },
   statusBtn: { flex: 1, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  visualizeBtn: { flex: 1, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  visualizeBtn: { flex: 1, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', paddingHorizontal:10 },
   deleteBtn: { width: 45, height: 40, borderRadius: 12, backgroundColor: '#db2626', justifyContent: 'center', alignItems: 'center' },
   btnText: { color: '#FFF', fontSize: 12, fontWeight: '800' },
   btnTextGreen: { fontSize: 12, fontWeight: '800' },

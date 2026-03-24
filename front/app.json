@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Herbia",
-    "slug": "herbia",
+    "slug": "front",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,6 +23,7 @@
         "backgroundImage": "./assets/adaptive-icon.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "usesCleartextTraffic": true,
       "package": "com.cobr4.herbia"
     },
     "web": {
