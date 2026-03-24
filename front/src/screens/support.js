@@ -17,7 +17,7 @@ export default function SupportScreen({ navigation }) {
   const activeColor = THEME.primary;
 
   const handleEmailSupport = () => {
-    Linking.openURL('mailto:suporte@herbia.com?subject=Ajuda com o App');
+    Linking.openURL('mailto:suporte.plantaapp@gmail.com?subject=Ajuda com o App');
   };
 
   return (
