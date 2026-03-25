@@ -1,10 +1,8 @@
 import api from './api';
 
 const userService = {
-  /**
-   * BUSCAR DADOS DO PERFIL (Para visualizar Nome, Email, Foto, etc.)
-   * Rota: GET /usuarios/:id
-   */
+  
+  // BUSCAR DADOS DO PERFIL
   getPerfil: async (id) => {
     try {
       const response = await api.get(`/usuarios/${id}`);
@@ -15,10 +13,7 @@ const userService = {
     }
   },
 
-  /**
-   * ATUALIZAR NOME
-   * Rota: PUT /usuarios/:id
-   */
+  // ATUALIZAR A HOME
   atualizarNome: async (id, nome) => {
     try {
       const response = await api.put(`/usuarios/${id}`, { nome });
@@ -29,10 +24,7 @@ const userService = {
     }
   },
 
-  /**
-   * ATUALIZAR FOTO DE PERFIL (Multipart/Form-Data)
-   * Rota: PUT /usuarios/:id/foto
-   */
+  // ATUALIZAR CONTA
   atualizarFoto: async (id, fotoUri, fileName, fileType) => {
     try {
       const formData = new FormData();
@@ -55,10 +47,7 @@ const userService = {
     }
   },
 
-  /**
-   * ALTERAR SENHA
-   * Rota: PUT /usuarios/:id/senha
-   */
+  // ALTERAR SENHA
   alterarSenha: async (id, senhaAtual, novaSenha) => {
     try {
       const response = await api.put(`/usuarios/${id}/senha`, { 
@@ -72,10 +61,7 @@ const userService = {
     }
   },
 
-  /**
-   * APAGAR CONTA
-   * Rota: DELETE /usuarios/:id/conta
-   */
+  // APAGAR CONTA
   deleteConta: async (id, senha) => {
     try {
       const response = await api.delete(`/usuarios/${id}/conta`, {

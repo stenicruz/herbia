@@ -1,7 +1,3 @@
-// Configurações de Rede
-
-//USAR ESSE HOST CASO ESTEJA NOUTRA REDE QUE NÃO A DE CASA
-//const HOST = '192.168.0.104';
 export const HOST = '192.168.0.104';
 export const PORT = 3333;
 

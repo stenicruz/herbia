@@ -28,6 +28,7 @@ export const BottomTabBar = ({ state, navigation }) => {
   const screenConfigs = {
     Home: { label: 'Casa', icon: Home },
     History: { label: 'Histórico', icon: History },
+    CameraScanner: { label: 'Câmera', icon: Camera },
     Profile: { label: 'Perfil', icon: User },
     AdminHome: { label: 'Painel', icon: LayoutDashboard },
     UserManagement: { label: 'Usuários', icon: Users },
@@ -70,22 +71,19 @@ export const BottomTabBar = ({ state, navigation }) => {
             );
           })}
 
-          <View style={styles.cameraTabWrapper}>
-            <TouchableOpacity 
+          <TouchableOpacity 
               style={[
-                styles.cameraTabBtn, 
-                { 
-                  borderColor: isDarkMode ? '#1c201a' : '#a5ef95',
-                  elevation: isDarkMode ? 12 : 8
-                }
+                styles.cameraTabBtn
               ]} 
               onPress={() => navigation.navigate('CameraScanner')} 
               activeOpacity={0.8}
             >
-              <Camera color={activeColor} size={45} fill={isDarkMode ? "#121411" : "#fff"}/>
+              <Camera style={[
+                {marginBottom:2}
+              ]} color={inactiveColor} size={32} fill={isDarkMode ? "#121411" : "#fff"}/>
+              <Text style={[styles.tabLabel, {marginTop:1},{ color: inactiveColor }]}>Câmera</Text>
             </TouchableOpacity>
-            <Text style={[styles.tabLabel, { color: inactiveColor }]}>Câmera</Text>
-          </View>
+            
           {/* --- ABAS DEPOIS DA CÂMERA (Perfil) --- */}
           {tabs.slice(2).map((route, index) => {
             const isFocused = state.index === index + 2;
@@ -156,18 +154,14 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   cameraTabWrapper: { 
-    alignItems: 'center', 
-    marginTop: -42,
-    flex: 1 
+    alignItems: 'center',
+    flex: 1,
+    width: 66, 
   },
   cameraTabBtn: {
-    backgroundColor: '#47e426',
-    width: 66,
-    height: 66,
-    borderRadius: 33,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 5,
     marginBottom: 2,
+    marginHorizontal:26,
   }
 });

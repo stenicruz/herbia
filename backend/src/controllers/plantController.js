@@ -2,8 +2,9 @@ import axios from 'axios';
 import FormData from 'form-data';
 import fs from 'fs';
 import setupDb from '../config/database.js';
-import { HOST, PORT, IA_URL } from '../config/constants.js';
+import { IA_URL } from '../config/constants.js';
 
+// --- Analisar Planta ---
 export const analisarPlanta = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Imagem obrigatória' });
 
@@ -15,7 +16,7 @@ export const analisarPlanta = async (req, res) => {
   const db = await setupDb();
 
   try {
-    // 1. Enviar para a IA (Flask)
+    // Enviar para a IA
     const formData = new FormData();
     formData.append('file', fs.createReadStream(filePath));
 
@@ -28,7 +29,7 @@ export const analisarPlanta = async (req, res) => {
     const { classe_id, confianca } = aiResponse.data;
     const confiancaPercent = Math.round(confianca * 100);
 
-    // 2. Buscar informações detalhadas na Base de Dados
+    // Buscar informações detalhadas na Base de Dados
     const info = await db.get(`
       SELECT d.*, c.nome as planta_nome 
       FROM doencas d
@@ -47,7 +48,7 @@ export const analisarPlanta = async (req, res) => {
 
     const imagemUrl = `/uploads/analises/${req.file.filename}`;
 
-    // 3. Se estiver logado, guarda AUTOMATICAMENTE no histórico
+    // Se estiver logado, guarda AUTOMATICAMENTE no histórico
     if (token && token !== "null" && token !== "") {
       const session = await db.get('SELECT usuario_id FROM sessoes WHERE token = ?', [token]);
       
@@ -69,7 +70,7 @@ export const analisarPlanta = async (req, res) => {
       }
     }
 
-    // 4. Retorna tudo para o telemóvel (incluindo a precisão da IA)
+    // Retorna tudo para o telemóvel (incluindo a precisão da IA)
     res.json({
       classe_ia: classe_id,
       planta: resultado.planta_nome,
@@ -80,7 +81,7 @@ export const analisarPlanta = async (req, res) => {
       caseiro: resultado.tratamento_caseiro,
       convencional: resultado.tratamento_convencional,
       precisao: confiancaPercent,
-      imagem: `http://${HOST}:${PORT}${imagemUrl}`
+      imagem: imagemUrl
     });
 
   } catch (err) {
@@ -91,7 +92,7 @@ export const analisarPlanta = async (req, res) => {
   }
 };
 
-// Funções de Histórico (Só para logados)
+// --- Funções de Histórico ---
 export const listarHistorico = async (req, res) => {
   const db = await setupDb();
   const analises = await db.all(
@@ -101,6 +102,7 @@ export const listarHistorico = async (req, res) => {
   res.json(analises);
 };
 
+// --- Deletar Análise ---
 export const deletarAnalise = async (req, res) => {
   const db = await setupDb();
   await db.run('DELETE FROM historico_analises WHERE id = ? AND usuario_id = ?', [req.params.id, req.usuario_id]);

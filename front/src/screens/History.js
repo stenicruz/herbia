@@ -33,6 +33,7 @@ export default function HistoryScreen({ navigation }) {
   // --- ESTADOS DE MODAL ---
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+  const [deletando, setDeletando] = useState(false);
 
   const opcoesPlanta = ['Todas', ...new Set(historico.map(item => item.planta))].sort();
   const opcoesStatus = ['Todos', 'Saudável', 'Doente'];
@@ -44,7 +45,7 @@ export default function HistoryScreen({ navigation }) {
       const dados = await plantService.listarHistorico();
       setHistorico(dados);
     } catch (error) {
-      console.error("Erro ao carregar histórico:", error);
+      console.warn("Erro ao carregar histórico:", error);
     } finally {
       setLoading(false);
     }
@@ -60,11 +61,14 @@ export default function HistoryScreen({ navigation }) {
   const handleConfirmDelete = async () => {
     if (!selectedId) return;
     try {
+      setDeletando(true);
       await plantService.deletarAnalise(selectedId);
       setHistorico(prev => prev.filter(item => item.id !== selectedId));
       setModalVisible(false);
     } catch (error) {
       Alert.alert("Erro", "Não foi possível eliminar o registro.");
+    } finally {
+    setDeletando(false);
     }
   };
 
@@ -251,6 +255,7 @@ export default function HistoryScreen({ navigation }) {
         onConfirm={handleConfirmDelete}
         title="Deseja eliminar?"
         message="Esta ação não poderá ser desfeita."
+        loading={deletando}
       />
     </SafeAreaView>
   );

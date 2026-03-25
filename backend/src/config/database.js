@@ -2,7 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import path from 'path';
 
-// ✅ Conexão única partilhada — evita SQLITE_BUSY
+// Conexão única partilhada — evita SQLITE_BUSY
 let dbInstance = null;
 
 async function setupDb() {
@@ -98,7 +98,7 @@ async function setupDb() {
     `);
 
     const tableCheck = await dbInstance.get("SELECT name FROM sqlite_master WHERE type='table' AND name='usuarios'");
-    console.log(tableCheck ? "✅ Tabela 'usuarios' pronta!" : "❌ Tabela 'usuarios' NÃO ENCONTRADA!");
+    console.log(tableCheck ? "✅ Tabelas prontas!" : "❌ Tabelas NÃO ENCONTRADAS!");
     
     return dbInstance;
 }

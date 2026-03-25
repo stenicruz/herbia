@@ -7,31 +7,18 @@ const router = express.Router();
 
 // --- Rotas de Análise ---
 
-/** * POST /api/plantas/analisar
- * Rota pública: qualquer pessoa (logada ou não) pode analisar.
- * O controller verifica o token internamente para decidir se guarda no histórico.
- */
+//Rota pública: qualquer pessoa (logada ou não) pode analisar.
 router.post('/analisar', uploadAnalise.single('imagem'), plantController.analisarPlanta);
 
-/**
- * POST /api/plantas/salvar-pendente
- * Rota privada: usada pelo APK após o login para guardar uma análise 
- * que foi feita enquanto o utilizador ainda era anónimo.
- */
+//Rota privada: usada pelo APK após o login para guardar uma análise que foi feita enquanto o utilizador ainda era anónimo.
 router.post('/salvar-pendente', auth, plantController.salvarAnalisePendente);
 
 // --- Rotas de Histórico ---
 
-/**
- * GET /api/plantas/historico
- * Retorna todas as análises do utilizador logado.
- */
+//Retorna todas as análises do utilizador logado.
 router.get('/historico', auth, plantController.listarHistorico);
 
-/**
- * DELETE /api/plantas/historico/:id
- * Remove uma análise específica. O 'auth' garante que ninguém apaga dados alheios.
- */
+//Remove uma análise específica. O 'auth' garante que ninguém apaga dados alheios.
 router.delete('/historico/:id', auth, plantController.deletarAnalise);
 
 export default router;

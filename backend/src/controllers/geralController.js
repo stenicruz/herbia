@@ -11,7 +11,7 @@ export const listarCulturas = async (req, res) => {
     // Ajustar o URL da imagem para o Android conseguir carregar
     const culturasFormatadas = culturas.map(c => ({
       ...c,
-      imagem_url: c.imagem_url ? `http://${HOST}:${PORT}${c.imagem_url}` : ''
+      imagem_url: c.imagem_url  || ''
     }));
 
     res.json(culturasFormatadas);

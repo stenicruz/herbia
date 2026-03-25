@@ -3,7 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
 // Definimos a base para facilitar a manutenção
-const BASE_SERVER = 'http://192.168.0.104:3333';
+// const BASE_SERVER = 'http://192.168.0.104:3333';
+const BASE_SERVER = 'https://fallible-rotatably-taren.ngrok-free.dev';
 
 const api = axios.create({
   baseURL: `${BASE_SERVER}/api`,
@@ -36,23 +37,22 @@ export const setNavigationRef = (ref) => {
   navigationRef = ref;
 };
 
-// --- NOVO INTERCEPTOR DE RESPOSTA (TRATAMENTO DE DADOS) ---
+// --- INTERCEPTOR DE RESPOSTA (TRATAMENTO DE DADOS) ---
 api.interceptors.response.use(
   (response) => {
     // Função genérica para corrigir caminhos de imagem
     const fixUrls = (obj) => {
-  if (!obj || typeof obj !== 'object') return obj;
+    if (!obj || typeof obj !== 'object') return obj;
 
-  // Lista de chaves que o seu backend usa
-  const imageKeys = ['imagem_url', 'foto_url', 'foto', 'avatar', 'foto_perfil'];
+    // Lista de chaves que o seu backend usa
+    const imageKeys = ['imagem_url', 'foto_url', 'foto', 'avatar', 'foto_perfil'];
 
-  imageKeys.forEach(key => {
-    if (obj[key] && typeof obj[key] === 'string') {
-      // Se não começa com http e tem algo escrito, prefixamos com o servidor
-      if (!obj[key].startsWith('http')) {
-        const cleanPath = obj[key].startsWith('/') ? obj[key] : `/${obj[key]}`;
-        obj[key] = `${BASE_SERVER}${cleanPath}`;
-      }
+    imageKeys.forEach(key => {
+      if (obj[key] && typeof obj[key] === 'string'  && obj[key] !== '') {
+        if (!obj[key].startsWith('http')) {
+          const cleanPath = obj[key].startsWith('/') ? obj[key] : `/${obj[key]}`;
+          obj[key] = `${BASE_SERVER}${cleanPath}`;
+        }
     }
   });
 

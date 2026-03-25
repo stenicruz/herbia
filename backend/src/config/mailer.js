@@ -4,16 +4,14 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
-  secure: true, // true para a porta 465
+  secure: true,
   auth: {
     user: "suporte.plantaapp@gmail.com",
     pass: "rngf njhp qmlh ywax"
   }
 });
 
-/**
- * Função utilitária para enviar e-mails de qualquer lugar do app
- */
+// Função utilitária para enviar e-mails de qualquer lugar do app
 export const sendEmail = async (to, subject, html) => {
   const mailOptions = {
     from: '"Herbia Suporte" <suporte.plantaapp@gmail.com>',

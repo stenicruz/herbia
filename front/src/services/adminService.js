@@ -14,7 +14,6 @@ const adminService = {
 
   atualizarStatusUsuario: async (id, novoStatus) => {
     try {
-      // Rota que aponta para o seu controller de update de usuário
       const response = await api.put(`/admin/usuarios/${id}/status`, { ativo: novoStatus });
       return response.data;
     } catch (error) {
@@ -31,7 +30,7 @@ const adminService = {
     }
   },
 
-  // Histórico global com filtros
+  // Histórico global
   listarHistoricoGlobal: async (filtros = {}) => {
     try {
       const response = await api.get('/admin/historico', { params: filtros });

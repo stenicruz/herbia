@@ -8,7 +8,8 @@ GoogleSignin.configure({
 });
 
 const authService = {
-  // 1. Função de Login
+  
+  // Função de Login
   login: async (email, senha) => {
     try {
       const response = await api.post('/auth/login', { email, senha });
@@ -26,13 +27,13 @@ const authService = {
         await AsyncStorage.setItem('@Herbia:user', JSON.stringify(userData));
       }
 
-      return response.data; // Retorna { token, user } para o ecrã usar
+      return response.data;
     } catch (error) {
-      // Lança o erro para o ecrã de Login mostrar um Alert
       throw error.response?.data || { error: 'Erro de conexão com o servidor' };
     }
   },
 
+  // VERIFICAR SENHA
   verificarSenha: async (senha) => {
   try {
     const response = await api.post('/auth/verificar-senha', { senha });
@@ -42,6 +43,7 @@ const authService = {
   }
   },
 
+  // LOGIN SOCIAL
   loginGoogle: async (googleToken) => {
   try {
     const response = await api.post('/auth/login-google', { token: googleToken });
@@ -61,10 +63,9 @@ const authService = {
   }
 },
 
-  // 2. Função de Registo (Sign Up)
+  // Função de Registo
  register: async (nome, email, senha) => {
   try {
-    // O objeto { nome, email, senha } deve bater EXATAMENTE com o que o Backend espera no req.body
     const response = await api.post('/auth/registrar', { nome, email, senha });
     return response.data;
   } catch (error) {
@@ -72,13 +73,13 @@ const authService = {
   }
  },
 
-  // 3. Função de Logout
+  // Função de Logout
   logout: async () => {
   try {
-    // 1. Limpa o seu armazenamento local
+    // Limpa o seu armazenamento local
     await AsyncStorage.multiRemove(['@Herbia:token', '@Herbia:user']);
 
-    // 2. Força o Google a "esquecer" o vínculo
+    // Força o Google a "esquecer" o vínculo
     if (GoogleSignin) {
       try {
         // Primeiro revogamos o acesso (limpa o cache de escolha de conta)
@@ -98,12 +99,13 @@ const authService = {
 },
 
 
-  // 4. Verificar se existe um utilizador logado (Útil para o Splash Screen)
+  // Verificar se existe um utilizador logado
   isLoggedIn: async () => {
     const token = await AsyncStorage.getItem('@Herbia:token');
     return token !== null;
   },
   
+  // VERIFICAR EMAIL
   verifyEmail: async (email, codigo) => {
   try {
     const response = await api.post('/auth/validar-email', { email, codigo });
@@ -113,9 +115,9 @@ const authService = {
   }
   },
 
+  // VERIFICAR CÓDIGO
   verifyResetCode: async (email, codigo) => {
     try {
-      // Usamos a mesma rota de validar-codigo, pois a lógica de conferir email+token é igual
       const response = await api.post('/auth/validar-codigo', { email, codigo });
       return response.data;
     } catch (error) {
@@ -123,6 +125,7 @@ const authService = {
     }
   },
 
+  // MUDAR SENHA
   resetPassword: async (email, codigo, novaSenha) => {
     try {
       const response = await api.post('/auth/redefinir-senha', { email, codigo, novaSenha });
@@ -132,6 +135,7 @@ const authService = {
     }
   },
 
+  // REENCIAR CÓDIGO
   resendCode: async (email, motivo) => {
   try {
     const response = await api.post('/auth/reenviar-codigo', { email, motivo });
@@ -141,6 +145,7 @@ const authService = {
   }
 },
 
+// ESQUECI A MINHA SENHA
   forgotPassword: async (email) => {
     try {
         const response = await api.post('/auth/recuperar-senha', { email });

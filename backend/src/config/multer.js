@@ -6,17 +6,17 @@ import fs from 'fs';
 const __dirname = path.resolve();
 const uploadsPath = path.join(__dirname, 'uploads');
 const perfilPath = path.join(uploadsPath, 'perfil');
-const analisesPath = path.join(uploadsPath, 'analises'); // Pasta para IA
-const culturasPath = path.join(uploadsPath, 'culturas'); // Pasta para Admin
+const analisesPath = path.join(uploadsPath, 'analises');
+const culturasPath = path.join(uploadsPath, 'culturas');
 
-// Criar pastas se não existirem (Garante a estrutura completa)
+// Criar pastas se não existirem
 [uploadsPath, perfilPath, analisesPath, culturasPath].forEach(pasta => {
     if (!fs.existsSync(pasta)) {
         fs.mkdirSync(pasta, { recursive: true });
     }
 });
 
-// 1. Configuração para Fotos das Análises (IA)
+// Configuração para Fotos das Análises (IA)
 const storageAnalises = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/analises/');
@@ -26,7 +26,7 @@ const storageAnalises = multer.diskStorage({
     }
 });
 
-// 2. Configuração para Fotos de Perfil (Utilizadores)
+// Configuração para Fotos de Perfil (Utilizadores)
 const storagePerfil = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/perfil/');
@@ -36,7 +36,7 @@ const storagePerfil = multer.diskStorage({
     }
 });
 
-// 3. Configuração para Fotos de Culturas (Admin)
+// Configuração para Fotos de Culturas (Admin)
 const storageCulturas = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/culturas/');

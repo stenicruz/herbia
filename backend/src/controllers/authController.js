@@ -3,14 +3,13 @@ import crypto from 'crypto';
 import setupDb from '../config/database.js';
 import { OAuth2Client } from 'google-auth-library';
 import { sendEmail } from '../config/mailer.js';
-import { HOST, PORT } from '../config/constants.js';
 
-// Configuração do Google Client (Coloca aqui!)
+// Configuração do Google Client (futuramente usar um .env pra guardar isso)
 const googleClient = new OAuth2Client('691168137852-d8n5v7st68kojqntlu1t7b5cuf15dvp9.apps.googleusercontent.com');
 
 // --- REGISTAR ---
 export const registrar = async (req, res) => {
-  console.log("📍 RECEBI UM PEDIDO DE REGISTRO!");
+  console.log("RECEBI UM PEDIDO DE REGISTRO!");
   console.log("Dados recebidos:", req.body);
   const { nome, email, senha } = req.body;
   const db = await setupDb();
@@ -18,7 +17,7 @@ export const registrar = async (req, res) => {
   const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
-    // 1. Salva na BD primeiro
+    // Salva na BD primeiro
     await db.run(
       `INSERT INTO usuarios (nome, email, senha, email_verificado, token_email, tipo_usuario, ativo)
        VALUES (?, ?, ?, 0, ?, 'usuario', 1)`,
@@ -26,7 +25,7 @@ export const registrar = async (req, res) => {
     );
     console.log("✅ [DB] Usuário inserido!");
 
-    // 2. Tenta enviar o e-mail num bloco separado para não quebrar o registro
+    // Tenta enviar o e-mail num bloco separado para não quebrar o registro
     try {
       console.log("⏳ [MAIL] Enviando para:", email);
       await sendEmail(
@@ -37,11 +36,8 @@ export const registrar = async (req, res) => {
       console.log("✅ [MAIL] Enviado com sucesso!");
     } catch (mailError) {
       console.error("⚠️ [MAIL] Falha no envio:", mailError.message);
-      // Aqui o registro continua, pois o user já está no SQLite!
     }
-
     res.status(201).json({ sucesso: true });
-
   } catch (err) {
     console.log("🚨 [ERRO NO REGISTRO]:");
     console.error(err);
@@ -71,7 +67,7 @@ export const login = async (req, res) => {
     return res.status(403).json({ 
       error: 'EMAIL_NOT_VERIFIED', // Usamos um código fixo para o Frontend identificar
       message: 'Email não verificado. Verifique o seu email.',
-      email: user.email // Importante para a navegação no telemóvel
+      email: user.email
     });
   }
 
@@ -98,7 +94,7 @@ export const login = async (req, res) => {
       email: user.email,
       role: user.tipo_usuario || 'usuario',
       ativo: user.ativo ?? 1,
-      foto_perfil: user.foto_perfil ? `http://${HOST}:${PORT}${user.foto_perfil}` : ''
+      foto_perfil: user.foto_perfil || ''
     }
   });
 };
@@ -127,26 +123,26 @@ export const loginGoogle = async (req, res) => {
     const { sub: google_id, email, name, picture } = payload;
     const db = await setupDb();
 
-    // 2. Procurar se o utilizador já existe (pelo ID do Google ou pelo Email)
+    // Procurar se o utilizador já existe (pelo ID do Google ou pelo Email)
     let user = await db.get(
       'SELECT * FROM usuarios WHERE google_id = ? OR email = ?',
       [google_id, email]
     );
 
     if (!user) {
-      // 3. Se não existe, cria conta (já verificada pois vem do Google)
+      // Se não existe, cria conta (já verificada pois vem do Google)
       const result = await db.run(
         `INSERT INTO usuarios (nome, email, google_id, foto_perfil, auth_provider, tipo_usuario, ativo, email_verificado)
         VALUES (?, ?, ?, ?, 'google', 'usuario', 1, 1)`,
         [name, email, google_id, picture]
       );
       console.log("----------------------------");
-console.log("USUÁRIO INSERIDO COM SUCESSO!");
-console.log("ID GERADO:", result.lastID);
-console.log("----------------------------");
+      console.log("USUÁRIO INSERIDO COM SUCESSO!");
+      console.log("ID GERADO:", result.lastID);
+      console.log("----------------------------");
       user = await db.get('SELECT * FROM usuarios WHERE id = ?', [result.lastID]);
     } else {
-      // 4. Se existe mas não tinha Google ID (criou com email/senha antes), atualiza
+      // Se existe mas não tinha Google ID (criou com email/senha antes), atualiza
       if (!user.google_id) {
         await db.run(
           'UPDATE usuarios SET google_id = ?, foto_perfil = ?, auth_provider = ? WHERE id = ?',
@@ -156,7 +152,7 @@ console.log("----------------------------");
       }
     }
 
-    // 5. Verificar se a conta está banida
+    // Verificar se a conta está banida
     if (user.ativo === 0) {
       return res.status(403).json({ 
         error: "Esta conta foi desativada pelo administrador.",
@@ -164,7 +160,7 @@ console.log("----------------------------");
       });
     }
 
-    // 6. Criar Sessão
+    // Criar Sessão
     const sessionToken = crypto.randomBytes(32).toString('hex');
     await db.run('INSERT INTO sessoes (usuario_id, token) VALUES (?, ?)', [user.id, sessionToken]);
 
@@ -249,7 +245,7 @@ export const reenviarCodigo = async (req, res) => {
   res.json({ sucesso: true });
 };
 
-// --- RECUPERAR SENHA (ESQUECI SENHA) ---
+// --- RECUPERAR SENHA  ---
 export const recuperarSenha = async (req, res) => {
   const { email } = req.body;
   const db = await setupDb();
@@ -286,7 +282,7 @@ export const redefinirSenha = async (req, res) => {
   res.json({ sucesso: true });
 };
 
-
+// --- BUSCAR DADOS DO PERFIL ---
 export const buscarPerfil = async (req, res) => {
   try {
     const db = await setupDb();
@@ -302,18 +298,13 @@ export const buscarPerfil = async (req, res) => {
     );
 
     if (user) {
-      let fotoUrl = user.foto_perfil || '';
-      if (fotoUrl.startsWith('/uploads')) {
-        fotoUrl = `http://${HOST}:${PORT}${fotoUrl}`;
-      }
-
       res.json({
         id: user.id,
         nome: user.nome,
         email: user.email,
         role: user.tipo_usuario || 'usuario',
         ativo: user.ativo,
-        foto_perfil: fotoUrl
+        foto_perfil: user.foto_perfil || ''
       });
     } else {
       res.status(404).json({ error: 'Usuário não encontrado' });
@@ -338,7 +329,7 @@ export const verificarSenha = async (req, res) => {
     const senhaCorreta = await bcrypt.compare(senha, user.senha);
 
     if (!senhaCorreta) {
-      // ✅ 400 em vez de 401 — não confunde com sessão expirada
+      // 400 em vez de 401 — não confunde com sessão expirada
       return res.status(400).json({ error: 'Senha incorreta.' });
     }
 

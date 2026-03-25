@@ -1,7 +1,7 @@
 import setupDb from '../config/database.js';
 
 export async function auth(req, res, next) {
-  // 1. Pega o token enviado pelo App no Header
+  // Pega o token enviado pelo App no Header
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -16,7 +16,7 @@ export async function auth(req, res, next) {
 
     const db = await setupDb();
     
-    // 2. Procura a sessão correspondente ao token limpo
+    // Procura a sessão correspondente ao token limpo
     const session = await db.get('SELECT * FROM sessoes WHERE token = ?', [token]);
 
     if (!session) {
@@ -24,10 +24,10 @@ export async function auth(req, res, next) {
       return res.status(401).json({ error: 'Sessão expirada' });
     }
 
-    // 3. Injeta o ID do usuário no objeto 'req'
+    // Injeta o ID do usuário no objeto 'req'
     req.usuario_id = session.usuario_id;
 
-    // 4. Autoriza a passagem
+    // Autoriza a passagem
     next();
   } catch (error) {
     console.error("Erro no Middleware Auth:", error);

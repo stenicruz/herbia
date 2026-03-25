@@ -16,7 +16,7 @@ router.get('/usuarios/:id/historico', auth, verificarAdmin, adminController.obte
 router.put('/usuarios/:id/status', auth, verificarAdmin, adminController.atualizarStatusUsuario);
 router.delete('/usuarios/:id', auth, verificarAdmin, adminController.eliminarUsuario);
 
-// --- GESTÃO DO HISTÓRICO GLOBAL (FILTROS) ---
+// --- GESTÃO DO HISTÓRICO GLOBAL  ---
 router.get('/historico', auth, verificarAdmin, adminController.listarHistoricoGlobal);
 router.delete('/historico/:id', auth, verificarAdmin, adminController.eliminarAnalise);
 

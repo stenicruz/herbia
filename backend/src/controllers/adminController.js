@@ -27,7 +27,7 @@ export const obterEstatisticasHome = async (req, res) => {
         // Formatar imagens das análises recentes
         const recentesFormatados = recentes.map(r => ({
             ...r,
-            imagem_url: r.imagem_url ? `http://${HOST}:${PORT}${r.imagem_url}` : ''
+            imagem_url: r.imagem_url || ''
         }));
 
         res.json({ stats, recentes: recentesFormatados });
@@ -60,7 +60,7 @@ export const listarHistoricoGlobal = async (req, res) => {
         
         const formatado = historico.map(h => ({
             ...h,
-            imagem_url: h.imagem_url ? `http://${HOST}:${PORT}${h.imagem_url}` : ''
+            imagem_url: h.imagem_url || ''
         }));
 
         res.json(formatado);
@@ -81,7 +81,7 @@ export const obterHistoricoPorUsuario = async (req, res) => {
 
         const formatado = analises.map(a => ({
             ...a,
-            imagem_url: a.imagem_url ? `http://${HOST}:${PORT}${a.imagem_url}` : ''
+            imagem_url: a.imagem_url || ''
         }));
 
         res.json(formatado);
@@ -90,6 +90,7 @@ export const obterHistoricoPorUsuario = async (req, res) => {
     }
 };
 
+// --- ELIMINAR ANÁLISE ---
 export const eliminarAnalise = async (req, res) => {
     const { id } = req.params;
     try {
@@ -101,6 +102,7 @@ export const eliminarAnalise = async (req, res) => {
     }
 };
 
+// --- MOSTRAR DICAS ---
 export const listarDicas = async (req, res) => {
   try {
     const db = await setupDb();
@@ -111,6 +113,7 @@ export const listarDicas = async (req, res) => {
   }
 };
 
+// --- CRIAR DICAS ---
 export const criarDica = async (req, res) => {
     const { titulo, conteudo } = req.body;
     try {
@@ -123,6 +126,7 @@ export const criarDica = async (req, res) => {
     }
 };
 
+// --- EDITAR DICA ---
 export const editarDica = async (req, res) => {
     const { id } = req.params;
     const { titulo, conteudo } = req.body;
@@ -135,6 +139,7 @@ export const editarDica = async (req, res) => {
     }
 };
 
+// --- ELIMINAR DICA ---
 export const eliminarDica = async (req, res) => {
     const { id } = req.params;
     try {
@@ -146,9 +151,9 @@ export const eliminarDica = async (req, res) => {
     }
 };
 
-
+// --- GERIR USUÁRIOS ---
 export const gerirUsuarios = async (req, res) => {
-    const { busca, filtro } = req.query; // filtro: 'ativos', 'inativos', 'admins', 'usuario'
+    const { busca, filtro } = req.query;
     let query = `SELECT id, nome, email, tipo_usuario, ativo, foto_perfil, criado_em FROM usuarios WHERE 1=1`;
     const params = [];
 
@@ -169,6 +174,7 @@ export const gerirUsuarios = async (req, res) => {
     }
 };
 
+// --- CRIAR ADMIN ---
 export const criarNovoAdmin = async (req, res) => {
     const { nome, email, senha } = req.body;
     try {
@@ -204,7 +210,6 @@ export const eliminarUsuario = async (req, res) => {
     const { id } = req.params;
     try {
         const db = await setupDb();
-        // CUIDADO: Isso pode falhar se o usuário tiver histórico (Foreign Key)
         await db.run('DELETE FROM usuarios WHERE id = ?', [id]);
         res.json({ sucesso: true });
     } catch (err) {
@@ -266,7 +271,7 @@ export const listarCulturas = async (req, res) => {
     const culturas = await db.all('SELECT * FROM culturas ORDER BY nome ASC');
     const formatadas = culturas.map(c => ({
       ...c,
-      imagem_url: c.imagem_url ? `http://${HOST}:${PORT}${c.imagem_url}` : ''
+      imagem_url: c.imagem_url || ''
     }));
     res.json(formatadas);
   } catch (err) {

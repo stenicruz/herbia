@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import setupDb from './src/config/database.js'; // Ajusta o caminho se necessário
+import setupDb from './src/config/database.js';
 
 // Importar as Rotas
 import authRoutes from './src/routes/authRoutes.js';
@@ -13,8 +13,6 @@ import geralRoutes from './src/routes/geralRoutes.js';
 
 const app = express();
 const PORT = 3333;
-//USAR ESSE HOST CASO ESTEJA NOUTRA REDE QUE NÃO A DE CASA
-//const HOST = '192.168.0.104';
 const HOST = '192.168.0.104';
 
 app.use(cors());
@@ -34,12 +32,12 @@ app.use('/api', geralRoutes);
 
 async function startServer() {
   try {
-    // 1. Força a ligação e criação das tabelas logo no início
+    // Força a ligação e criação das tabelas logo no início
     console.log("⏳ Inicializando base de dados...");
     await setupDb(); 
     console.log("✅ Base de dados pronta e tabelas verificadas!");
 
-    // 2. Só depois de a BD estar OK é que ligamos o servidor
+    // Depois de a BD estar OK é que ligamos o servidor
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀🌿 Servidor Herbia rodando em http://${HOST}:${PORT}`);
     });

@@ -18,11 +18,11 @@ export const atualizarNome = async (req, res) => {
   }
 };
 
-// --- BUSCAR DADOS DO PERFIL (VISUALIZAÇÃO) ---
+// --- BUSCAR DADOS DO PERFIL  ---
 export const buscarPerfil = async (req, res) => {
   const { id } = req.params;
 
-  // Segurança: O usuário só pode ver o próprio perfil (ou se for admin)
+  // Segurança: O usuário só pode ver o próprio perfil
   if (parseInt(id) !== req.usuario_id) {
     return res.status(403).json({ error: 'Acesso negado' });
   }
@@ -32,9 +32,9 @@ export const buscarPerfil = async (req, res) => {
     
     // Selecionamos apenas os campos necessários (não enviamos a senha por segurança)
     const user = await db.get(
-  `SELECT id, nome, email, auth_provider, 
-(CASE WHEN senha IS NULL OR senha = '' THEN 0 ELSE 1 END) as tem_senha 
-FROM usuarios WHERE id = ?`, 
+      `SELECT id, nome, email, auth_provider, 
+      (CASE WHEN senha IS NULL OR senha = '' THEN 0 ELSE 1 END) as tem_senha 
+      FROM usuarios WHERE id = ?`, 
   [req.usuario_id]
 );
 
@@ -42,7 +42,7 @@ FROM usuarios WHERE id = ?`,
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    // Retorna os dados para o Front-end
+    // Retorna os dados para o Front
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar dados do usuário' });
@@ -61,7 +61,7 @@ export const atualizarFoto = async (req, res) => {
     const fotoPath = `/uploads/perfil/${req.file.filename}`;
     await db.run('UPDATE usuarios SET foto_perfil = ? WHERE id = ?', [fotoPath, req.usuario_id]);
     
-    res.json({ foto_url: `http://${HOST}:${PORT}${fotoPath}` });
+    res.json({ foto_url: fotoPath });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao salvar foto' });
   }
@@ -86,7 +86,6 @@ export const alterarSenha = async (req, res) => {
       }
     } 
     // Se NÃO TEM senha (usuário Google), ele pode simplesmente definir a nova.
-    
     const hash = await bcrypt.hash(novaSenha, 10);
     await db.run('UPDATE usuarios SET senha = ? WHERE id = ?', [hash, req.usuario_id]);
     
@@ -101,10 +100,10 @@ export const apagarConta = async (req, res) => {
   const { id } = req.params;
   const { senha } = req.body;
 
-  // LOG DE DEBUG: Verifique isso no terminal do seu VS Code / Node
+  // LOG DE DEBUG
   console.log(`Tentativa de delete - ID URL: ${id}, ID Token: ${req.usuario_id}`);
 
-  // 1. Validação de ID (Garante que o dono da conta é quem está deletando)
+  // Validação de ID (Garante que o dono da conta é quem está deletando)
   if (parseInt(id) !== req.usuario_id) {
     return res.status(403).json({ error: 'Acesso negado: ID divergente' });
   }
@@ -117,7 +116,7 @@ export const apagarConta = async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
 
-    // 2. Validação de Senha (Apenas para contas Locais)
+    // Validação de Senha (Apenas para contas Locais)
     if (user.senha) {
       if (!senha) {
         return res.status(400).json({ error: 'Senha é obrigatória para esta conta.' });
@@ -128,7 +127,7 @@ export const apagarConta = async (req, res) => {
       }
     }
 
-    // 3. Exclusão em Cadeia (Transação seria ideal, mas aqui segue o seu fluxo)
+    // Exclusão em Cadeia
     await db.run('DELETE FROM sessoes WHERE usuario_id = ?', [req.usuario_id]);
     await db.run('DELETE FROM historico_analises WHERE usuario_id = ?', [req.usuario_id]);
     await db.run('DELETE FROM usuarios WHERE id = ?', [req.usuario_id]);

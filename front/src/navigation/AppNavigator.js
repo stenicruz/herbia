@@ -107,9 +107,13 @@ useEffect(() => {
     }
   }
 
-  const completeOnboarding = async () => {
+  const completeOnboarding = async (navigation) => {
     await AsyncStorage.setItem('@alreadyLaunched', 'true');
     setIsFirstTime(false);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'AccessMode' }],
+    });
   };
 
   if (isLoading) return <MySplash />;
@@ -125,7 +129,7 @@ useEffect(() => {
     }
   >
     <Stack.Screen name="Onboarding">
-      {(props) => <Onboarding {...props} onFinish={completeOnboarding} />}
+      {(props) => <Onboarding {...props} onFinish={() => completeOnboarding(props.navigation)} />}
     </Stack.Screen>
 
     {/* ✅ Todas as telas registadas uma única vez */}
