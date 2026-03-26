@@ -22,6 +22,7 @@
     "expo-image-manipulator": "~55.0.9",
     "expo-image-picker": "~55.0.11",
     "expo-linear-gradient": "^55.0.8",
+    "expo-navigation-bar": "~55.0.9",
     "expo-splash-screen": "~55.0.10",
     "expo-status-bar": "~55.0.4",
     "expo-system-ui": "~55.0.10",

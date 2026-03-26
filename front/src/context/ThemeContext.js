@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as NavigationBar from 'expo-navigation-bar';
 
 const ThemeContext = createContext();
 
@@ -40,6 +41,8 @@ export const ThemeProvider = ({ children }) => {
       
       // Salva a string 'dark' ou 'light' no celular
       await AsyncStorage.setItem('@herbia_theme', newMode ? 'dark' : 'light');
+
+      await NavigationBar.setBackgroundColorAsync(newMode ? '#010501' : '#ffffff');
     } catch (error) {
       console.error("Erro ao salvar tema:", error);
     }
