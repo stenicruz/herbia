@@ -5,7 +5,6 @@ dist/
 npm-debug.log*
 defence.md
 # Python & IA
-ia_service/
 ia_service/venv/
 ia_service/.venv/
 **/__pycache__/
