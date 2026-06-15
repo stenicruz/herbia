@@ -1,17 +1,17 @@
-import setupDb from '../config/database.js';
-import { HOST, PORT } from '../config/constants.js';
+import { pool } from '../config/database.js';
 
 // --- LISTAR TODAS AS CULTURAS ---
-// O usuário vê a lista de plantas que o sistema suporta
+// O usuário vê a lista de plantas que o sistema (AgroDetector) suporta
 export const listarCulturas = async (req, res) => {
   try {
-    const db = await setupDb();
-    const culturas = await db.all('SELECT id, nome, imagem_url FROM culturas ORDER BY nome ASC');
+    // No Postgres, os dados vêm em result.rows
+    const result = await pool.query('SELECT id, nome, imagem_url FROM culturas ORDER BY nome ASC');
+    const culturas = result.rows;
 
-    // Ajustar o URL da imagem para o Android conseguir carregar
+    // Como as URLs já vêm completas do Supabase, apenas garantimos que não retornem null
     const culturasFormatadas = culturas.map(c => ({
       ...c,
-      imagem_url: c.imagem_url  || ''
+      imagem_url: c.imagem_url || ''
     }));
 
     res.json(culturasFormatadas);
@@ -22,15 +22,15 @@ export const listarCulturas = async (req, res) => {
 };
 
 // --- OBTER UMA DICA ALEATÓRIA (DINÂMICA) ---
-// Cada vez que chamamos esta rota, vem uma dica diferente
+// Utilizado para mostrar dicas de cultivo ou prevenção na Home do App
 export const obterDicaDoDia = async (req, res) => {
   try {
-    const db = await setupDb();
-    
-    // O comando 'ORDER BY RANDOM() LIMIT 1' é a magia para ser dinâmico no SQLite
-    const dica = await db.get('SELECT id, titulo, conteudo FROM dicas ORDER BY RANDOM() LIMIT 1');
+    // O comando 'ORDER BY RANDOM()' é o padrão do PostgreSQL para sorteio
+    const result = await pool.query('SELECT id, titulo, conteudo FROM dicas ORDER BY RANDOM() LIMIT 1');
+    const dica = result.rows[0];
 
     if (!dica) {
+      // Caso o admin ainda não tenha cadastrado dicas no painel
       return res.status(404).json({ error: 'Nenhuma dica cadastrada ainda.' });
     }
 

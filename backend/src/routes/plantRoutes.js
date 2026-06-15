@@ -8,7 +8,7 @@ const router = express.Router();
 // --- Rotas de Análise ---
 
 //Rota pública: qualquer pessoa (logada ou não) pode analisar.
-router.post('/analisar', uploadAnalise.single('imagem'), plantController.analisarPlanta);
+router.post('/analisar', uploadAnalise.single('file'), plantController.analisarPlanta);
 
 //Rota privada: usada pelo APK após o login para guardar uma análise que foi feita enquanto o utilizador ainda era anónimo.
 router.post('/salvar-pendente', auth, plantController.salvarAnalisePendente);

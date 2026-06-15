@@ -1,0 +1,2 @@
+ia_service/app/model/best_model.pth filter=lfs diff=lfs merge=lfs -text
+ia_service/app/model/*.pth filter=lfs diff=lfs merge=lfs -text

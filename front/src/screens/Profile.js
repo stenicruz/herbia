@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
-  StyleSheet, View, Text, TouchableOpacity, ScrollView, Platform, Image, Switch, Modal, StatusBar, TextInput, KeyboardAvoidingView, Alert
+  StyleSheet, View, Text, TouchableOpacity, ScrollView, Platform, Image, Switch, Modal, StatusBar, TextInput, KeyboardAvoidingView, Alert, ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +21,7 @@ export default function ProfileScreen({ route }) {
   const navigation = useNavigation();
   const { isDarkMode, toggleTheme } = useTheme();
   const currentTheme = isDarkMode ? THEME.dark : THEME.light;
+  const [userData, setUserData] = useState(null);
 
   // ESTADOS PARA OS DADOS DO BACK-END
   const [user, setUser] = useState(null);
@@ -87,35 +88,78 @@ const confirmDeleteAccount = async () => {
   // Carregar dados ao entrar na tela
   useFocusEffect(
   React.useCallback(() => {
-    loadUserData(); // Aquela sua função que já busca do AsyncStorage
+    let isMounted = true;
+
+    const carregarPerfil = async () => {
+      setLoading(true); // Começa sempre com loading ao entrar/focar
+      try {
+        // 1. Busca os dados básicos do storage (muito rápido)
+        const storedUser = await AsyncStorage.getItem('@Herbia:user');
+        
+        if (storedUser && isMounted) {
+          const parsedUser = JSON.parse(storedUser);
+          
+          if (parsedUser.id === 'guest') {
+            setUser(parsedUser);
+            setLoading(false); // É convidado, não precisa de API
+            return;
+          }
+
+          // 2. Se for usuário logado, tenta atualizar via API
+          try {
+            const freshData = await userService.getPerfil(parsedUser.id);
+            setUser(freshData);
+            await AsyncStorage.setItem('@Herbia:user', JSON.stringify(freshData));
+          } catch (apiErr) {
+            // Se a API falhar (sem net), usamos o que estava no storage
+            setUser(parsedUser);
+          }
+        }
+      } catch (err) {
+        console.error("Erro no Profile:", err);
+      } finally {
+        if (isMounted) setLoading(false); // Só aqui a tela é "liberada"
+      }
+    };
+
+    carregarPerfil();
+    return () => { isMounted = false; };
   }, [])
 );
+
+  const checkUserProfile = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem('@Herbia:user');
+      if (storedUser) {
+        setUserData(JSON.parse(storedUser));
+      }
+    } catch (err) {
+      console.warn("Erro ao verificar perfil:", err);
+    }
+  };
+
+  const showProfileAlert = userData && (
+    !userData.perfil_user ||    // Estava perfil_agricola antes
+    !userData.provincia         // Estava provincia_residencia antes
+  );
+
 
 const loadUserData = async () => {
   try {
     const storedUser = await AsyncStorage.getItem('@Herbia:user');
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
-      setUser(parsed);
-
-      // ✅ Busca tem_senha actualizado do backend
-      // O userService.getPerfil chama GET /usuarios/:id que devolve tem_senha real
-      try {
-        const perfilActualizado = await userService.getPerfil(parsed.id);
-        const userActualizado = { 
-          ...parsed, 
-          tem_senha: perfilActualizado.tem_senha 
-        };
-        // Actualiza o AsyncStorage com o valor correcto
-        await AsyncStorage.setItem('@Herbia:user', JSON.stringify(userActualizado));
-        setUser(userActualizado);
-      } catch (e) {
-        // Se falhar (ex: sem internet), usa o valor local
-        console.warn("Não foi possível actualizar tem_senha:", e);
-      }
+      
+      // Chamada ao backend para pegar os dados REAIS e ATUAIS
+      const perfilCompleto = await userService.getPerfil(parsed.id);
+      
+      // Sobrescreve o armazenamento local com a verdade do servidor
+      await AsyncStorage.setItem('@Herbia:user', JSON.stringify(perfilCompleto));
+      setUser(perfilCompleto);
+      setUserData(perfilCompleto); // Atualiza o estado que controla o Card de Alerta
     }
   } catch (e) {
-    console.warn("Erro ao carregar dados do usuário", e);
+    console.warn("Erro ao sincronizar perfil:", e);
   } finally {
     setLoading(false);
   }
@@ -160,6 +204,19 @@ const loadUserData = async () => {
 
   const languages = ['Português'];
 
+  if (loading) {
+    return (
+      <View style={{ 
+        flex: 1, 
+        backgroundColor: currentTheme.background, 
+        justifyContent: 'center', 
+        alignItems: 'center' 
+      }}>
+        <ActivityIndicator size="large" color={activeColor} />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.safeContainer, { backgroundColor: currentTheme.background }]} edges={['top']}>
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
@@ -179,7 +236,17 @@ const loadUserData = async () => {
               style={styles.avatar} 
             />
           </View>
-          <Text style={[styles.userName, { color: currentTheme.textPrimary }]}>{isGuest ? 'Olá, Convidado' : user.nome}</Text>
+          <Text style={[styles.userName, { color: currentTheme.textPrimary }]}>
+            {isGuest 
+              ? 'Olá, Convidado' 
+              : (typeof user.nome === 'object' 
+                  ? user.nome.nome 
+                  : (typeof user.nome === 'string' && user.nome.startsWith('{')
+                      ? JSON.parse(user.nome).nome 
+                      : user.nome) || 'Utilizador'
+                )
+            }
+          </Text>
           <Text style={[styles.userEmail, { color: isDarkMode ? '#888' : '#BBB' }]}>{isGuest ? 'criaconta@email.com' : user.email}</Text>
           
           {isAdmin && (
@@ -188,6 +255,34 @@ const loadUserData = async () => {
             </View>
           )}
         </View>
+
+      {showProfileAlert && (
+        <TouchableOpacity 
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('EditProfile')}
+          style={[
+            styles.alertCard, 
+            { 
+              backgroundColor: isDarkMode ? '#1e211d' : '#F9F9F9',
+              borderColor: isDarkMode ? '#2d322c' : '#E0E0E0' 
+            }
+          ]}
+        >
+          <View style={styles.alertContent}>
+            <View style={styles.alertTextWrapper}>
+              <Text style={styles.alertTitle}>Perfil Incompleto</Text>
+              <Text style={[styles.alertSubtitle, { color: currentTheme.textSecondary }]}>
+                Adicione sua localização e categoria.
+              </Text>
+            </View>
+            <ChevronRight color={"#e70d0d"} size={25} />
+          </View>
+          
+          <View style={[styles.progressBarBg, { backgroundColor: isDarkMode ? '#333' : '#EEE' }]}>
+            <View style={[styles.progressBarFill, { width: '60%' }]} />
+          </View>
+        </TouchableOpacity>
+      )}
 
         {/* Menu de Opções */}
         <View style={styles.menuContainer}>
@@ -412,5 +507,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 20,
     fontSize: 16,
+  },
+  alertCard: {
+    marginHorizontal: 24,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 30,
+    borderWidth: 1,
+  },
+  alertContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  alertTextWrapper: {
+    flex: 1,
+    marginRight: 10
+  },
+  alertTitle: {
+    fontWeight: '800',
+    fontSize: 15,
+    color: '#e70d0d', 
+  },
+  alertSubtitle: {
+    fontSize: 12,
+    marginTop: 4,
+    lineHeight: 16,
+  },
+  progressBarBg: {
+    height: 4,
+    borderRadius: 2,
+    marginTop: 12,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#e70d0d',
+    borderRadius: 2,
   },
 });

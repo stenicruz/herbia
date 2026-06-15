@@ -1,11 +1,11 @@
-import setupDb from '../config/database.js';
+import { pool } from '../config/database.js';
 
 export const verificarAdmin = async (req, res, next) => {
     try {
-        const db = await setupDb();
-        
         // O req.usuario_id vem do middleware 'auth' que corre antes deste
-        const user = await db.get('SELECT tipo_usuario FROM usuarios WHERE id = ?', [req.usuario_id]);
+        // No Postgres, usamos pool.query e o placeholder $1
+        const result = await pool.query('SELECT tipo_usuario FROM usuarios WHERE id = $1', [req.usuario_id]);
+        const user = result.rows[0];
 
         if (!user || user.tipo_usuario !== 'admin') {
             return res.status(403).json({ 

@@ -1,0 +1,12 @@
+Alterações na BD:
+
+Adicionar na tabela usuarios os campos: perfil_agricola (para saber se é agricultor, tecnico Agricola, estudante ou sei lá o que), provincial, municipio (pra questão de gerenciamento do admin e tal, poderia ser apenas a provincial, mas a logica pra provincial é praticamente a mesma que a de municipio né!). com isso poderiamos configurar um card que aparece de 4 em 4 ias pro usuario fornecer o seu tipo (agricultor e tal) e a provincial em que vive.
+
+Adicionar na tabela historico_analises: latitude, longitude (a ideia é que ao fazer a analise ele capture esse dois dados pra saber a localização de onde a analise foi feita e talvez a localização aproximada do usuario (desde que não viole nenhum direito), e serviria pra algumas questoes do admin, como controlar em que zonas tem mais doenças e quais, quais plantas tem em masi zonas e tal). 
+
+
+
+
+no editar perfil tem que fazer essas cenas serem dinamicas (a parte de informações agricolas).
+
+o card de perfil imcmpleto deve aparecer apenas pra usuarios comuns e não pra admin

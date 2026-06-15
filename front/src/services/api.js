@@ -3,12 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
 // Definimos a base para facilitar a manutenção
-// const BASE_SERVER = 'http://192.168.0.104:3333';
-const BASE_SERVER = 'https://fallible-rotatably-taren.ngrok-free.dev';
+const BASE_SERVER = 'https://herbia-backend.onrender.com';
+//const BASE_SERVER = 'https://fallible-rotatably-taren.ngrok-free.dev';
 
 const api = axios.create({
   baseURL: `${BASE_SERVER}/api`,
-  timeout: 45000,
+  timeout: 70000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

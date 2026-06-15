@@ -2,15 +2,30 @@
 node_modules/
 .expo/
 dist/
-
-# Python
+npm-debug.log*
+defence.md
+# Python & IA
+ia_service/
 ia_service/venv/
-__pycache__/
+ia_service/.venv/
+**/__pycache__/
 *.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+# Se tiveres logs da IA
+ia_service/*.log
 
-# Dados Pesados
+# Dados Pesados & Treino
 ia_service/dataset/
-backend/uploads/
 ia_service/train/dataset/
-# Ambiente
+backend/uploads/
+*.pth
+# Exceção: queremos o modelo final, mas não os checkpoints de treino
+!ia_service/app/model/best_model.pth 
+!ia_service/README.md
+# Ambiente e IDE
 .env
+.vscode/
+.idea/
+DS_Store

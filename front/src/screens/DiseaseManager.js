@@ -98,10 +98,16 @@ useFocusEffect(
           <View style={[styles.estadoBadge, {
             backgroundColor: item.estado === 'Saudável'
               ? (isDarkMode ? '#1A2E1A' : '#E8F5E9')
-              : (isDarkMode ? '#2D1414' : '#FFEBEE')
+              : item.estado === 'N/A'
+                ? (isDarkMode ? '#2A2A2A' : '#f0ecec') // Fundo cinza para N/A
+                : (isDarkMode ? '#2D1414' : '#FFEBEE')  // Fundo vermelho para doente
           }]}>
             <Text style={[styles.estadoText, {
-              color: item.estado === 'Saudável' ? ACTIVE_GREEN : '#FF5252'
+              color: item.estado === 'Saudável' 
+                ? ACTIVE_GREEN 
+                : item.estado === 'N/A' 
+                  ? '#888888' // Texto cinza para N/A
+                  : '#FF5252' // Texto vermelho para doente
             }]}>
               {item.estado}
             </Text>

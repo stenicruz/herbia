@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/:id', auth, userController.buscarPerfil);
 
 // ATUALIZAR NOME
-router.put('/:id', auth, userController.atualizarNome);
+router.put('/:id', auth, userController.atualizarPerfil);
 
 // ATUALIZAR FOTO DE PERFIL
 router.put('/:id/foto', auth, uploadPerfil.single('foto'), userController.atualizarFoto);

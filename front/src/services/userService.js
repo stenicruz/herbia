@@ -13,13 +13,13 @@ const userService = {
     }
   },
 
-  // ATUALIZAR A HOME
-  atualizarNome: async (id, nome) => {
+  
+  atualizarPerfil: async (id, dados) => { // dados deve ser { nome, perfil_user, provincia }
     try {
-      const response = await api.put(`/usuarios/${id}`, { nome });
+      const response = await api.put(`/usuarios/${id}`, dados);
       return response.data;
     } catch (error) {
-      const errorMsg = error?.response?.data?.error || "Erro ao atualizar nome";
+      const errorMsg = error?.response?.data?.error || "Erro ao atualizar perfil";
       throw new Error(errorMsg);
     }
   },

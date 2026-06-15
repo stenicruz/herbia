@@ -10,7 +10,9 @@ import { BottomTabBar } from '../components/central.js';
 
 // Telas
 import AccessMode from '../screens/AccessMode';
-import AdminHome from '../screens/AdminHome.js'
+import AdminGeoScreen    from '../screens/AdminGeoScreen.js';
+import AdminHome from '../screens/AdminHome.js';
+import AdminReportScreen from '../screens/AdminReportScreen.js';
 import AdminTips from '../screens/AdminTips.js';
 import AllAnalyses from '../screens/AllAnalyses.js'
 import CameraScanner from '../screens/CameraScanner.js';
@@ -32,6 +34,7 @@ import PhotoSupport from '../screens/PhotoSupport.js';
 import PrivacyPolicy from '../screens/PrivacyPolicy.js';
 import Profile from '../screens/Profile.js'
 import Register from '../screens/Register.js';
+import ReportScreen from '../screens/ReportScreen.js';
 import ResetPassword from '../screens/ResetPassword.js';
 import ShowCulture from '../screens/ShowCulture.js'
 import MySplash from '../screens/Splash'; 
@@ -169,6 +172,9 @@ useEffect(() => {
     <Stack.Screen name="DiseaseManager" component={DiseaseManager} />
     <Stack.Screen name="EditDisease" component={EditDisease} />
     <Stack.Screen name="PhotoConfirmation" component={PhotoConfirmation} />
+    <Stack.Screen name="ReportScreen" component={ReportScreen} />
+    <Stack.Screen name="AdminReportScreen" component={AdminReportScreen} />
+    <Stack.Screen name="AdminGeoScreen"    component={AdminGeoScreen} />
   </Stack.Navigator>
 );
 }

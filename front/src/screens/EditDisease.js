@@ -68,6 +68,7 @@ export default function EditDisease({ navigation, route }) {
   const listaEstados = [
     { id: 'Saudável', name: 'Saudável', icon: 'check-circle-outline' },
     { id: 'Doente', name: 'Doente', icon: 'alert-circle-outline' },
+    { id: 'N/A', name: 'N/A', icon: 'help-circle-outline' },
   ];
 
   useEffect(() => {
@@ -302,7 +303,10 @@ export default function EditDisease({ navigation, route }) {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <MaterialCommunityIcons
                     name={item.icon} size={22}
-                    color={item.id === 'Saudável' ? '#4CAF50' : '#F44336'}
+                    color={
+                      item.id === 'Saudável' ? '#4CAF50' : 
+                      item.id === 'N/A' ? '#888888' : '#F44336'
+                    }
                   />
                   <Text style={[styles.modalOptionText, { color: currentTheme.textPrimary },
                     estadoSelecionado?.id === item.id && { color: ACTIVE_GREEN, fontWeight: 'bold' }
@@ -355,7 +359,7 @@ const styles = StyleSheet.create({
   },
   deleteBtnText: { color: '#FF4444', fontWeight: 'bold', fontSize: 16 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalContent: { borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, paddingBottom: 40 },
+  modalContent: { borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 25, paddingBottom: 80 },
   modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   modalOption: {
     paddingVertical: 15, paddingHorizontal: 15,

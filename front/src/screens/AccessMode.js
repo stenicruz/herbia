@@ -126,10 +126,12 @@ export default function Decision({ navigation }) {
           }
         />
 
-        {/* BOTÃO DE RESET (Só para desenvolvedor) */}
+        {/* BOTÃO DE RESET (Só para desenvolvedor)
         <TouchableOpacity onPress={resetOnboarding} style={styles.devButton}>
           <Text style={styles.devButtonText}>Reset Onboarding (Dev Only)</Text>
         </TouchableOpacity>
+        */}
+        
       </View>
 
       {/* 3. Rodapé Termos */}

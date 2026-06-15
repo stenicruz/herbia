@@ -272,9 +272,10 @@ export default function AnalysesListScreen({ navigation }) {
                 <View style={styles.textGroup}>
                   <Text style={[styles.plantaNome, { color: currentTheme.textPrimary }]}>{item.planta}</Text>
                   <Text style={[styles.plantaStatus, {
-                    color: item.estado === 'Saudável' ? ACTIVE_GREEN : '#FF5252'
-                  }]}>
-                    {item.doenca || item.estado}
+                    color: item.estado === 'Saudável' ? "#47e426" : 
+                      (item.estado === 'N/A' || item.doenca === 'Desconhecido') ? '#888888' : '#FF5252' 
+                    }]}>
+                      {item.doenca || item.estado}
                   </Text>
                   {/* ✅ Nome do utilizador */}
                   <Text style={[styles.usuarioNome, { color: isDarkMode ? '#777' : '#888' }]}>
@@ -351,10 +352,10 @@ const styles = StyleSheet.create({
   thumbImage: { width: '100%', height: '100%' },
   textGroup: { marginLeft: 15 },
   plantaNome: { fontSize: 17, fontWeight: '800' },
-  plantaStatus: { fontSize: 14, fontWeight: '800', marginVertical: 3 },
+  plantaStatus: { fontSize: 14, fontWeight: '800', marginVertical: 3, width: '99%' },
   plantaData: { fontSize: 12, fontWeight: '600' },
   cardActions: { flexDirection: 'row', alignItems: 'center' },
-  divider: { width: 1, height: '60%', marginHorizontal: 15 },
+  divider: { width: 1, height: '60%', marginHorizontal: 10 },
   deleteBtn: { padding: 8 },
   emptyText: { textAlign: 'center', marginTop: 50, fontSize: 15, fontWeight: '600' }
 });
