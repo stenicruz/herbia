@@ -10,12 +10,13 @@ Este serviço é chamado internamente pelo servidor Node.js e não deve ser expo
 
 ```
 ia_service/
-└── app/
-    ├── model/
-    │   └── best_model.pth   # Modelo treinado (incluído no repo)
-    ├── main.py              # Aplicação FastAPI
-    ├── requirements.txt     # Dependências Python
-    └── Dockerfile           # Para deploy (opcional)
+├── app/
+│   ├── model/
+│   │   └── best_model.pth   # Modelo treinado (incluído no repo)
+│   └── main.py              # Aplicação FastAPI
+├── requirements.txt         # Dependências Python
+├── Dockerfile               # Para deploy (opcional)
+└── README.md
 ```
 
 ---
@@ -31,7 +32,7 @@ ia_service/
 
 **1. Entra na pasta do serviço**
 ```bash
-cd ia_service/app
+cd ia_service
 ```
 
 **2. Cria e ativa um ambiente virtual**
@@ -54,7 +55,7 @@ pip install -r requirements.txt
 
 **4. Inicia o servidor**
 ```bash
-uvicorn main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8000
 ```
 
 O serviço ficará disponível em `http://127.0.0.1:8000`.
