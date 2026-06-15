@@ -201,5 +201,3 @@ A API REST está organizada em 5 grupos de rotas:
 Desenvolvido com 💚 em Angola 🇦🇴
 
 </div>
-exit code 0
-Done
