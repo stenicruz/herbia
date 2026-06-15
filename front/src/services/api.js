@@ -1,10 +1,10 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
+import Constants from 'expo-constants';
 
 // Definimos a base para facilitar a manutenção
-const BASE_SERVER = 'https://herbia-backend.onrender.com';
-//const BASE_SERVER = 'https://fallible-rotatably-taren.ngrok-free.dev';
+const BASE_SERVER = Constants.expoConfig.extra.apiUrl;
 
 const api = axios.create({
   baseURL: `${BASE_SERVER}/api`,

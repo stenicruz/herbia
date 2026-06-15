@@ -30,6 +30,7 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
+      "apiUrl": "http://SEU_IP_LOCAL:3333",
       "eas": {
         "projectId": "5fc6999b-5d61-4903-9bef-6746f39f0cec"
       }
